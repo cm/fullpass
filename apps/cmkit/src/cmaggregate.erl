@@ -14,7 +14,6 @@ init([Mod]) ->
   case TopicSpec of
     {any_worker, _} ->
       {ok, {{one_for_one, 1, 5}, [
-        cmkit:child_spec(cmaggregate_server, [Mod, self()], worker),
         cmkit:child_spec(w1, cmaggregate_worker, [Mod, self()], worker),
         cmkit:child_spec(w2, cmaggregate_worker, [Mod, self()], worker)
                                  ]}};
