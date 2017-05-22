@@ -3,7 +3,7 @@
 -export([init/0, handle/1, topic/0]).
 
 topic() ->
-  {worker, login, any}.
+  {any_worker, login}.
 
 init() ->
   ok.

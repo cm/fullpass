@@ -16,7 +16,7 @@ init([Mod, Sup]) ->
   TopicSpec = Mod:topic(),
   case TopicSpec of
     {any_worker, _} ->
-      {ok, #state{mod=Mod, sup=Sup, topic=TopicSpec}, 1000};
+      {ok, #state{mod=Mod, sup=Sup, topic=TopicSpec}, 2000};
     {_, T} ->
       cmcluster:sub(T),
       {ok, #state{mod=Mod, sup=Sup, topic=TopicSpec}}
@@ -26,11 +26,23 @@ handle_info(timeout, #state{mod=Mod, topic=TopicSpec}=State) ->
   {any_worker, T} = TopicSpec,
   Workers = erlang:system_info(schedulers_online),
   Sup = cmaggregate_worker_sup:registered_name(Mod),
-  [supervisor:start_child(Sup, [Id, T])|| Id <- lists:seq(1, Workers)],
+  [supervisor:start_child(Sup, [T])|| _ <- lists:seq(1, Workers)],
   {noreply, State};
 
-handle_info(Msg, #state{mod=Mod}=State) ->
-  Mod:handle(Msg),
+handle_info(Msg, #state{mod=Mod, topic=TopicSpec}=State) ->
+  case TopicSpec of 
+    {server, _} ->
+      Mod:handle(Msg);
+    {one_worker, _} ->
+      WorkerTopic = Mod:worker_topic(Msg),
+      case cmcluster:subscribers(WorkerTopic) of
+        [] -> 
+          Sup = cmaggregate_worker_sup:registered_name(Mod),
+          supervisor:start_child(Sup, [WorkerTopic]);
+        _ ->
+          cmcluster:pub(WorkerTopic,Msg)
+      end
+  end,
   {noreply, State}.
 
 handle_call(_, _, State) ->
