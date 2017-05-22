@@ -10,9 +10,26 @@ start_link(Mod) ->
   supervisor:start_link(?MODULE, [Mod]).
 
 init([Mod]) ->
-  {ok, {{one_for_one, 1, 5}, [
+  TopicSpec = Mod:topic(),
+  case TopicSpec of
+    {any_worker, _} ->
+      {ok, {{one_for_one, 1, 5}, [
+        cmkit:child_spec(cmaggregate_server, [Mod, self()], worker),
+        cmkit:child_spec(w1, cmaggregate_worker, [Mod, self()], worker),
+        cmkit:child_spec(w2, cmaggregate_worker, [Mod, self()], worker)
+                                 ]}};
+    {server, _} ->
+      {ok, {{one_for_one, 1, 5}, [
+        cmkit:child_spec(cmaggregate_server, [Mod, self()], worker)
+      ]}};
+
+    {one_worker, _} ->
+      {ok, {{one_for_one, 1, 5}, [
                               cmkit:child_spec(cmaggregate_server, [Mod, self()], worker),
                               
                               cmkit:child_spec(cmaggregate_worker_sup, [Mod, self()],supervisor)
-                             ]}}.
+                             ]}}
+  end.
+
+
 

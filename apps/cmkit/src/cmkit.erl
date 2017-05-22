@@ -1,5 +1,5 @@
 -module(cmkit).
--export([config/2, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, parse/2]).
+-export([config/2, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, parse/2]).
 
 config(Key, App) ->
   case application:get_env(App, Key) of
@@ -46,7 +46,10 @@ child_spec(M, Type) ->
   child_spec(M, [], Type).
 
 child_spec(M, Args, Type) ->
-  {M, {M, start_link, Args}, permanent, 5000, Type, [M]}.
+  child_spec(M, M, Args, Type).
+
+child_spec(Id, M, Args, Type) ->
+  {Id, {M, start_link, Args}, permanent, 5000, Type, [M]}.
 
 parse(Spec, Json) ->
   parse_input(Spec, [], Json).
