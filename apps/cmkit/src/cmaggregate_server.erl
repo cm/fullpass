@@ -1,49 +1,47 @@
 -module(cmaggregate_server).
 -behaviour(gen_server).
--export([start_link/2]).
+-export([start_link/1]).
 -export([init/1, 
          handle_call/3, 
          handle_cast/2, 
          handle_info/2, 
          terminate/2, 
          code_change/3]).
--record(state, {mod, sup, topic}).
+-record(state, {mod, topic, extra}).
 
-start_link(Mod, Sup) ->
-  gen_server:start_link(?MODULE, [Mod, Sup], []).
+start_link(Mod) ->
+  gen_server:start_link(?MODULE, [Mod], []).
 
-init([Mod, Sup]) ->
+init([Mod]) ->
   TopicSpec = Mod:topic(),
   case TopicSpec of
-    {any_worker, _} ->
-      {ok, #state{mod=Mod, sup=Sup, topic=TopicSpec}, 2000};
-    {_, T} ->
+    {server, T} ->
+      ExtraState = Mod:init(),
       cmcluster:sub(T),
-      {ok, #state{mod=Mod, sup=Sup, topic=TopicSpec}}
+      {ok, #state{mod=Mod, topic=TopicSpec, extra=ExtraState}};
+    {any_worker, _} ->
+      {ok, #state{mod=Mod, topic=TopicSpec}};
+    {one_worker, T} ->
+      cmcluster:sub(T),
+      {ok, #state{mod=Mod, topic=TopicSpec}}
   end.
 
-handle_info(timeout, #state{mod=Mod, topic=TopicSpec}=State) ->
-  {any_worker, T} = TopicSpec,
-  Workers = erlang:system_info(schedulers_online),
-  Sup = cmaggregate_worker_sup:registered_name(Mod),
-  [supervisor:start_child(Sup, [T])|| _ <- lists:seq(1, Workers)],
-  {noreply, State};
-
-handle_info(Msg, #state{mod=Mod, topic=TopicSpec}=State) ->
+handle_info(Msg, #state{mod=Mod, topic=TopicSpec, extra=ExtraState}=State) ->
   case TopicSpec of 
     {server, _} ->
-      Mod:handle(Msg);
+      NewState = Mod:handle(Msg, ExtraState),
+      {noreply, #state{extra=NewState}};
     {one_worker, _} ->
       WorkerTopic = Mod:worker_topic(Msg),
       case cmcluster:subscribers(WorkerTopic) of
         [] -> 
           Sup = cmaggregate_worker_sup:registered_name(Mod),
-          supervisor:start_child(Sup, [WorkerTopic]);
+          supervisor:start_child(Sup, [Msg]);
         _ ->
           cmcluster:pub(WorkerTopic,Msg)
-      end
-  end,
-  {noreply, State}.
+      end,
+      {noreply, State}
+  end.
 
 handle_call(_, _, State) ->
   {reply, ok, State}.
