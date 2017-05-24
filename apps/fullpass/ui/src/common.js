@@ -34,7 +34,7 @@ function readCookie(cname) {
 
 
 function addCookies(config) {
-  config.sessionId = readCookie("token"); 
+  config.sessionId = readCookie("cmtoken"); 
   return config;
 }
 

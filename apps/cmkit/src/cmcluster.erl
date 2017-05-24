@@ -1,10 +1,16 @@
 -module(cmcluster).
 -export([
-  sub/1, cmd/1, event/1, query/1, err/2, dispatch/2
+  pub/2, sub/1, cmd/1, event/1, query/1, err/2, dispatch/2, who/1
 ]).
+
+pub(T, Msg) ->
+  ebus:pub(T, Msg).
 
 sub(T) ->
   ebus:sub(self(), T).
+
+who(T) ->
+  ebus:subscribers(T).
 
 cmd({T, Args}) ->
   dispatch(cmd, {T, Args, self()}).

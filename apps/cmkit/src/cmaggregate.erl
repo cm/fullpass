@@ -4,33 +4,30 @@
 -export([behaviour_info/1]).
 
 behaviour_info(callbacks) ->
-  [{topic, 0}, {init, 0}, {handle, 2}].
+  [{mode, 0}, {topic, 0}, {topic, 1}, {init, 1}, {handle, 2}].
 
-start_link(Mod) ->
-  supervisor:start_link(?MODULE, [Mod]).
+start_link(Module) ->
+  supervisor:start_link(?MODULE, [Module]).
 
-init([Mod]) ->
-  TopicSpec = Mod:topic(),
-  case TopicSpec of
-    {any_worker, _} ->
+init([Module]) ->
+  Mode = Module:mode(),
+  case Mode of
+    any_worker ->
       {ok, {{one_for_one, 1, 5}, [
-        cmkit:child_spec(w1, cmaggregate_worker, [Mod], worker),
-        cmkit:child_spec(w2, cmaggregate_worker, [Mod], worker),
-        cmkit:child_spec(w3, cmaggregate_worker, [Mod], worker),
-        cmkit:child_spec(w4, cmaggregate_worker, [Mod], worker)
+                                  cmkit:child_spec(w1, cmaggregate_worker, [Module], worker),
+                                  cmkit:child_spec(w2, cmaggregate_worker, [Module], worker),
+                                  cmkit:child_spec(w3, cmaggregate_worker, [Module], worker),
+                                  cmkit:child_spec(w4, cmaggregate_worker, [Module], worker)
                                  ]}};
-    {server, _} ->
+    server ->
       {ok, {{one_for_one, 1, 5}, [
-        cmkit:child_spec(cmaggregate_server, [Mod], worker)
-      ]}};
+                                  cmkit:child_spec(cmaggregate_server, [Module, Mode], worker)
+                                 ]}};
 
-    {one_worker, _} ->
+    one_worker ->
       {ok, {{one_for_one, 1, 5}, [
-                              cmkit:child_spec(cmaggregate_server, [Mod], worker),
-                              
-                              cmkit:child_spec(cmaggregate_worker_sup, [Mod],supervisor)
-                             ]}}
+                                  cmkit:child_spec(cmaggregate_server, [Module, Mode], worker),
+
+                                  cmkit:child_spec(cmaggregate_worker_sup, [Module],supervisor)
+                                 ]}}
   end.
-
-
-
