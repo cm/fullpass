@@ -5,7 +5,9 @@
   {mod, { fullpass_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cmkit,
+    facebook
    ]},
   {env,[]},
   {modules, []},
