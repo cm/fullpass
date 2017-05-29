@@ -1,6 +1,6 @@
 -module(fullpass_user).
 -behaviour(cmaggregate).
--export([mode/0, init/1, handle/2, topic/0, topic/1]).
+-export([mode/0, init/1, handle/2, topic/0, topic/1, missing/1]).
 -record(data, {id, profile, sessions}).
 
 mode() ->
@@ -21,7 +21,7 @@ handle({profile, #{<<"id">> := Id}=P, Conn},
   % but also notify existing sessions with the new profile
   SessionId = cmkit:uuid(),
   cmcluster:sub({session, SessionId}),
-  cmcluster:event({session, {SessionId, Id}}),
+  cmcluster:event({session_started, {SessionId, Id}}),
   Conn ! SessionId,
   Data#data{profile=P, sessions=maps:put(SessionId, Conn, Sessions)};
 
@@ -49,3 +49,7 @@ with_session(Id, Conn, #data{sessions=Sessions, profile=P}=Data, Err, Next) ->
     false ->
       Err(Data)
   end.
+
+missing({{session, Id}, _, From}=Msg) ->
+  io:format("handling missing for: ~p~n", [Msg]),
+  ok.

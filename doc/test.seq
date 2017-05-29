@@ -1,0 +1,5 @@
+title: https://github.com/xavierchow/vim-sequence-diagram
+A->B: hello
+B->A: plop
+A->B: plop again
+B-->A: replop

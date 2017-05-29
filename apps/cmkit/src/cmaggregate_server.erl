@@ -13,6 +13,7 @@ start_link(Module, Mode) ->
   gen_server:start_link(?MODULE, [Module, Mode], []).
 
 init([Module, Mode]) ->
+  cmcluster:sub(no_subscribers),
   case Mode of
     server ->
       T = Module:topic(),
@@ -27,6 +28,10 @@ init([Module, Mode]) ->
       cmcluster:sub(T),
       {ok, #state{module=Module, mode=Mode, topic=T}}
   end.
+
+handle_info({no_subscribers, Msg}, #state{module=Module}=State) ->
+  Module:missing(Msg),
+  {noreply, State};
 
 handle_info(Msg, #state{module=Module, mode=Mode, data=Data}=State) ->
   case Mode of 
