@@ -32,15 +32,15 @@ dispatch(T, Msg) ->
     ebus:dispatch(T, Msg)
   catch
     _:no_subscribers_available -> 
-      dispatch(warn, {no_subscribers, T}, false)
+      dispatch(no_subscribers, {T, Msg}, false)
   end.
 
-dispatch(T, Msg, false) ->
+dispatch(no_subscribers, {T, Msg}, false) ->
   try 
-    ebus:dispatch(T, Msg)
+    ebus:pub(no_subscribers, Msg)
   catch
     _:no_subscribers_available -> 
-      io:format("No subcribers available for topic ~p, args: ~p~n", [T, Msg])
+      io:format("No subcribers available for topic: ~p~nfrom event: ~p~n", [T, Msg])
   end.
   
 

@@ -13,6 +13,9 @@ stop(_State) ->
 do([<<"ping">>]) -> 
   {data, #{<<"message">> => <<"pong">>}};
 
+do([<<"info">>]) ->
+  {data, cmperf:stats()};
+
 do([<<"login">>]) ->
   {anon, [{text, <<"code">>}], 
    fun(_, _, [Code]) ->
@@ -23,6 +26,17 @@ do([<<"login">>]) ->
       (_, _, SessionId) -> 
        {redirect, 
         cmkit:config(app_url, ?APP), #{<<"cmtoken">> => SessionId}}
+   end};
+
+do([<<"session">>]) ->
+  {anon, [{text, <<"id">>}],
+   fun(_, _, [Id]) ->
+       cmcluster:query({{session, Id}, none})
+   end,
+   fun(_, _, {ok, processing}) ->
+      continue;
+      (_, _, Profile) ->
+       {data, Profile}
    end};
 
 do(_) -> no_implemented.

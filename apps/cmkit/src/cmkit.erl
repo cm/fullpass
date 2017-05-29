@@ -1,5 +1,5 @@
 -module(cmkit).
--export([config/2, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, parse/2]).
+-export([config/2, config/3, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, parse/2]).
 
 config(Key, App) ->
   case application:get_env(App, Key) of
@@ -13,6 +13,12 @@ config(Key, App) ->
           end;
         V -> V
       end
+  end.
+
+config(Key, App, Default) ->
+  case config(Key, App) of
+    undefined -> Default;
+    Value -> Value
   end.
 
 env() ->

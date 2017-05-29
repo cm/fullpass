@@ -53,15 +53,15 @@ init flags =
             , Cmd.none
             )
 
-        Just s ->
+        Just id ->
             ( { flags = flags, state = LoggingIn, message = "", profile = Nothing }
-            , getSession flags
+            , getSession id flags
             )
 
 
-getSession : Flags -> Cmd Msg
-getSession flags =
-    WebSocket.send (wsUrl flags) (encodeAction "session")
+getSession : String -> Flags -> Cmd Msg
+getSession id flags =
+    WebSocket.send (wsUrl flags) (encodeGetSession id)
 
 
 getSessionId : Flags -> Maybe String
@@ -93,6 +93,16 @@ encodeAction str =
     Encode.encode 0
         (Encode.object
             [ ( "action", Encode.string str )
+            ]
+        )
+
+
+encodeGetSession : String -> String
+encodeGetSession id =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "session" )
+            , ( "id", Encode.string id )
             ]
         )
 
@@ -411,7 +421,7 @@ main =
 
 wsDecoder : Decoder Msg
 wsDecoder =
-    (field "type" Decode.string) |> andThen wsDecoderByType
+    (field "action" Decode.string) |> andThen wsDecoderByAction
 
 
 wsDecoderByStatus : String -> Decoder Msg
@@ -419,15 +429,15 @@ wsDecoderByStatus status =
     case status of
         "ok" ->
             (field "type" Decode.string)
-                |> andThen wsDecoderByType
+                |> andThen wsDecoderByAction
 
         _ ->
             Decode.fail <| status
 
 
-wsDecoderByType : String -> Decoder Msg
-wsDecoderByType dataType =
-    case dataType of
+wsDecoderByAction : String -> Decoder Msg
+wsDecoderByAction action =
+    case action of
         "ping" ->
             Decode.map PingData
                 (field "data" pingDecoder)
@@ -437,7 +447,7 @@ wsDecoderByType dataType =
                 (field "data" profileDecoder)
 
         _ ->
-            Decode.fail <| dataType
+            Decode.fail <| action
 
 
 pingDecoder : Decoder Ping
