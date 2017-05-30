@@ -20,12 +20,14 @@ handle({profile, #{<<"id">> := Id}=P, Conn},
   % TODO: rework this: register the new session, 
   % but also notify existing sessions with the new profile
   SessionId = cmkit:uuid(),
-  cmcluster:sub({session, SessionId}),
-  cmcluster:event({session_started, {SessionId, Id}}),
+  T = {session, SessionId},
+  cmcluster:sub(T),
+  cmcluster:event({T, a}),
+  %cmcluster:event({T, #{status => started, profile => Id}}),
   Conn ! SessionId,
   Data#data{profile=P, sessions=maps:put(SessionId, Conn, Sessions)};
 
-handle({{session, Id}, _, Conn}, #data{profile=P}=Data) ->
+handle({{session, Id}, none, Conn}, Data) ->
   with_session(Id, Conn, Data, 
                fun(Data2) -> 
                    Data2
@@ -33,7 +35,11 @@ handle({{session, Id}, _, Conn}, #data{profile=P}=Data) ->
                fun(P, Data2) ->
                    Conn ! P,
                    Data2
-               end).
+               end);
+
+handle(Msg, Data) ->
+  io:format("unexpected messag: ~p~n", [Msg]),
+  Data.
 
 with_session(Id, Conn, #data{sessions=Sessions, profile=P}=Data, Err, Next) ->
   case maps:is_key(Id, Sessions) of
@@ -50,6 +56,6 @@ with_session(Id, Conn, #data{sessions=Sessions, profile=P}=Data, Err, Next) ->
       Err(Data)
   end.
 
-missing({{session, Id}, _, From}=Msg) ->
+missing({{session, _}, _, _}=Msg) ->
   io:format("handling missing for: ~p~n", [Msg]),
   ok.

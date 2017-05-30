@@ -5,6 +5,5 @@
 start_link() ->
   cmsource:start_link(?MODULE, query).
 
-handle(Msg) ->
-  cmcluster:event(Msg).
-
+handle({T, _, _}=Msg) ->
+  cmcluster:dispatch(T, Msg).

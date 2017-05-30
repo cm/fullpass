@@ -12,13 +12,11 @@ start_link(Module, Topic, Msg) ->
   gen_server:start_link(?MODULE, [Module, Topic, Msg], []).
 
 init([Module, T]) ->
-  io:format("initializing aggregate worker with topic: ~p~n", [T]),
   D = Module:init(T),
   cmcluster:sub(T),
   {ok, #state{mod=Module, topic=T, data=D}};
 
 init([Module, T, Msg]) ->
-  io:format("initializing aggregate worker with topic: ~p~n", [T]),
   D = Module:init(T),
   D2 = Module:handle(Msg, D),
   cmcluster:sub(T),
