@@ -16,16 +16,14 @@ init({profile, Id}) ->
   #data{id=Id, sessions=#{}}.
 
 handle({profile, #{<<"id">> := Id}=P, Conn}, 
-       #data{id=Id, sessions=Sessions}=Data) ->
-  % TODO: rework this: register the new session, 
-  % but also notify existing sessions with the new profile
-  SessionId = cmkit:uuid(),
-  T = {session, SessionId},
-  cmcluster:sub(T),
-  cmcluster:event({T, a}),
+       #data{id=Id, sessions=_Sessions}=Data) ->
+  cmcluster:event({session, {cmkit:uuid(), P, Conn}}),
+  %cmcluster:sub(T),
+  %cmcluster:event({T, a}),
   %cmcluster:event({T, #{status => started, profile => Id}}),
-  Conn ! SessionId,
-  Data#data{profile=P, sessions=maps:put(SessionId, Conn, Sessions)};
+  %Conn ! SessionId,
+  %Data#data{profile=P, sessions=maps:put(SessionId, Conn, Sessions)};
+  Data#data{profile=P};
 
 handle({{session, Id}, none, Conn}, Data) ->
   with_session(Id, Conn, Data, 
