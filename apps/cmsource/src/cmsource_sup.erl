@@ -12,5 +12,6 @@ init([]) ->
     cmkit:child_spec(cmsource_cmd_server, worker),
     cmkit:child_spec(cmsource_query_server, worker),
     cmkit:child_spec(cmsource_event_server, worker),
-    cmkit:child_spec(cmsource_alarm_server, worker)
+    cmkit:child_spec(cmsource_alarm_server, worker),
+    cmkit:child_spec(cmsource_replay_server, worker)
   ]}}.

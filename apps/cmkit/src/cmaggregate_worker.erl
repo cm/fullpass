@@ -36,16 +36,16 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 handle_info(timeout, #state{mod=Module, data=D}=State) ->
-  D2=Module:timeout(D),
-  {noreply, State#state{data=D2}};
-
-handle_info(Msg, #state{mod=Module, topic=T, data=D}=State) ->
-  case Module:handle(Msg, D) of
+  case Module:timeout(D) of
     {continue, D2} ->
       {noreply, State#state{data=D2}};
     {stop, D2} ->
-      {stop, {timeout, T}, State#state{data=D2}}
-  end. 
+      {stop, normal, State#state{data=D2}}
+  end;
+
+handle_info(Msg, #state{mod=Module, data=D}=State) ->
+  D2 = Module:handle(Msg, D),
+  {noreply, State#state{data=D2}}.
 
 terminate(_Reason, _State) ->
   ok.

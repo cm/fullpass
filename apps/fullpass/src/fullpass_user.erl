@@ -20,5 +20,5 @@ handle({profile, #{<<"id">> := Id}=P, Conn},
   cmcluster:event({session, {cmkit:uuid(), P, Conn}}),
   Data#data{profile=P}.
 
-missing(Msg) ->
+missing(_) ->
   ignore.
