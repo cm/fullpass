@@ -29,9 +29,21 @@ init([Module, Mode]) ->
       {ok, #state{module=Module, mode=Mode, topic=T}}
   end.
 
-handle_info({no_subscribers, Msg}, #state{module=Module}=State) ->
-  Module:missing(Msg),
-  {noreply, State};
+handle_info({no_subscribers, Msg}, #state{module=Module, mode=Mode}=State) ->
+  case Module:missing(Msg) of
+    {replay, {T, Args}} ->
+      case Mode of 
+        one_worker ->
+          Sup = cmaggregate_worker_sup:registered_name(Module),
+          supervisor:start_child(Sup, [T, Args, 5000]),
+          cmcluster:event({replay, T}),
+          {noreply, State};
+        _ ->
+          {noreply, State}
+      end;
+    ignore ->
+      {noreply, State}
+  end;
 
 handle_info(Msg, #state{module=Module, mode=Mode, data=Data}=State) ->
   case Mode of 

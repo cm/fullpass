@@ -20,4 +20,4 @@ handle({login, Code, From}=Msg, _) ->
     cmcluster:err(Msg, Error)
   end).
 
-missing(_) -> ok.
+missing(_) -> ignore.
