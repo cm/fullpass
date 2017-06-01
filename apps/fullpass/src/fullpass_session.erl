@@ -9,29 +9,35 @@ mode() ->
 topic() ->
   session.
 
-topic({session, {Id, _Profile, _Conn}, _}) ->
+topic({{session, Id},  {Id, _P, _Conn}, _}) ->
   {session, Id}.
 
 init({session, Id}) ->
-  #data{id=Id}.
+  #data{id=Id, conn=none}.
 
-handle({session, {Id, P, Conn}, _}, #data{id=Id}=Data) ->
+handle({{session, Id}, {Id, P, Conn}, _}, #data{id=Id, conn=none}=Data) ->
   Conn ! Id,
   Data#data{profile=P, conn=Conn};
 
-handle({{session,Id}, _, Conn}, #data{id=Id, profile=P}=Data) ->
+handle({{session, Id}, {Id, P, _}}, #data{id=Id, conn=Conn}=Data) ->
+  Conn ! P,
+  Data#data{profile=P};
+
+handle({{session, Id}, none, Conn}, #data{id=Id, profile=P}=Data) ->
   Conn ! P,
   Data#data{conn=Conn};
 
-handle({{session, Id}, Conn}, #data{id=Id}=Data) ->
+handle({{session, Id}, Conn}, #data{id=Id, conn=none}=Data) ->
   Data#data{conn=Conn}.
 
 missing({{session, _}=T, none, Conn}) ->
   {replay, {T, {T, Conn}}};
 
-missing(_) ->
+missing({{session, _}, _, _Conn}) -> 
+  allocate;
+
+missing(_) -> 
   ignore.
 
 timeout(Data) ->
-  io:format("got timeout: ~p~n", [Data]),
   {stop, Data}.

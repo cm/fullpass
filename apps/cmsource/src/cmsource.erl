@@ -1,6 +1,6 @@
 -module(cmsource).
 -behaviour(gen_server).
--export([start_link/2, start_link/3]).
+-export([start_link/2, start_link/3, start_link/4]).
 -export([behaviour_info/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -record(state, {log, module, mode}).
@@ -14,43 +14,42 @@ start_link(Mod, LogName) ->
 start_link(Mod, LogName, Topic) ->
   gen_server:start_link(?MODULE, [Mod, LogName, Topic], []).
 
+start_link(Mod, LogName, Topic, Alias) ->
+  gen_server:start_link(?MODULE, [Mod, LogName, Topic, Alias], []).
+
 init([Mod, LogName]) ->
   init([Mod, LogName, LogName]);
 
 init([Module, LogName, Topic]) ->
+  init([Module, LogName, Topic, LogName]);
+
+init([Module, LogName, Topic, Alias]) ->
   Mode = Module:mode(),
   cmcluster:sub(Topic),
-  case Mode of
-    write ->
-      {ok, Log} = open_log(Mode, LogName),
-      {ok, #state{log=Log, module=Module, mode=Mode}};
-    read ->
-      {ok, #state{log=logfile(LogName), module=Module, mode=Mode}}
+  {ok, Log} = open_log(Mode, LogName, Alias),
+  {ok, #state{log=Log, module=Module, mode=Mode}}.
+
+open_log(Mode, Name, Alias) ->
+  Opts = log_opts(Name, Alias, Mode),
+  case disk_log:open(Opts) of
+    {error, E} -> {error, E};
+    {ok, Log} -> {ok, Log};
+    {repaired, Log, _, _} -> {ok, Log}
   end.
 
-open_log(Mode, Name) -> 
-  %file:open(logfile(Name), open_mode(Mode)).
-
-open_mode(Mode) ->
-  case Mode of
-    write -> [append, binary];
-    read -> [read]
-  end.
-
-disk_log_opts(Name) ->
-  [ {name,   Name}
+log_opts(Name, Alias, Mode) ->
+  [ {name,  Alias}
     , {file,   log_file(Name)}
     , {type,   halt}
     , {format, internal}
-    , {mode,   read_write}
+    , {mode,   log_mode(Mode)}
   ].
 
-%disk_log_open(File)     -> disk_log:open(disk_log_opts(File)).
-%disk_log_write(Log, T)  -> ok = disk_log:blog(Log, term_to_binary(T)).
-%disk_log_swrite(Log, T) -> disk_log_write(Log, T), ok = disk_log:sync(Log).
-%disk_log_close(Log)     -> disk_log:close(Log).
-
-
+log_mode(Mode) ->
+  case Mode of 
+    write -> read_write;
+    read -> read_only
+  end.
 
 log_file(Name) ->
   Dir = cmkit:config(dir, cmsource),
@@ -58,18 +57,36 @@ log_file(Name) ->
   filename:join([Dir, Filename]).
 
 write(Log, {T, Args}) ->
-  io:format(Log, "~p.~n", [{T, Args, cmkit:now()}]),
+  ok = disk_log:log(Log, {T, Args}),
   ok.
 
 read(Log, T) ->
-  io:format("reading file: ~p~n", [Log]),
-  {ok, Terms} = file:consult(Log),
-  lists:filter(fun({Topic, _, _}) ->
-                Topic == T
-               end, Terms).
+  {ok, Terms} = filter_log(Log, fun({Topic, _}) ->
+                                Topic == T
+                                end),
+  Terms.
+
+filter_log(Log, FilterFun) ->
+  filter_log(Log, start, [], FilterFun).
+
+filter_log(Log, Cont, SoFar, FilterFun) ->
+  case disk_log:chunk(Log, Cont) of 
+    {error, Rsn} ->
+      io:format("error while reading log: ~p, reason: ~p~n", [Log, Rsn]),
+      {ok, SoFar};
+    {Cont2, Terms} ->
+      filter_log(Log, Cont2, aggregate(Terms, SoFar, FilterFun), FilterFun); 
+    {Cont2, Terms, _} ->
+      filter_log(Log, Cont2, aggregate(Terms, SoFar, FilterFun), FilterFun); 
+    eof ->
+      {ok, SoFar} 
+  end.
+
+aggregate(Terms, SoFar, FilterFun) ->
+  SoFar ++ lists:filter(FilterFun, Terms).
 
 close(Log) ->
-  file:close(Log).
+  disk_log:close(Log).
 
 handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
@@ -80,8 +97,8 @@ handle_cast(_Msg, State) ->
 handle_info(timeout, S) ->
   {noreply, S};
 
-handle_info({T, _, _}=Msg, #state{log=File, mode=read, module=Module}=S) ->
-  Data = read(File, T),
+handle_info({_, Args, _}=Msg, #state{log=File, mode=read, module=Module}=S) ->
+  Data = read(File, Args),
   Module:handle(Msg, Data),
   {noreply, S};
 

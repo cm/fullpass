@@ -31,6 +31,16 @@ init([Module, Mode]) ->
 
 handle_info({no_subscribers, Msg}, #state{module=Module, mode=Mode}=State) ->
   case Module:missing(Msg) of
+    allocate ->
+      case Mode of 
+        one_worker ->
+          WorkerT = Module:topic(Msg),
+          Sup = cmaggregate_worker_sup:registered_name(Module),
+          supervisor:start_child(Sup, [WorkerT, Msg]),
+          {noreply, State};
+        _ ->
+          {noreply, State}
+      end;
     {replay, {T, Args}} ->
       case Mode of 
         one_worker ->

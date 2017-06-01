@@ -17,7 +17,11 @@ init({profile, Id}) ->
 
 handle({profile, #{<<"id">> := Id}=P, Conn}, 
        #data{id=Id, sessions=_Sessions}=Data) ->
-  cmcluster:event({session, {cmkit:uuid(), P, Conn}}),
+  SessionId = cmkit:uuid(),
+  T = {session, SessionId},
+  Args = {SessionId, P, Conn},
+  E = {T, Args},
+  cmcluster:event(E),
   Data#data{profile=P}.
 
 missing(_) ->
