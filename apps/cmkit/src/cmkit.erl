@@ -1,5 +1,5 @@
 -module(cmkit).
--export([config/2, config/3, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, parse/2]).
+-export([config/2, config/3, err/1, fmt/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, parse/2, diff_mins/2, diff_secs/2, mins_since/1]).
 
 config(Key, App) ->
   case application:get_env(App, Key) of
@@ -96,3 +96,13 @@ parse_actual(text, K, Json) ->
     V when is_binary(V) -> V;
     _ -> invalid
   end.
+
+mins_since(T) ->
+  diff_mins(T, calendar:universal_time()).
+
+diff_mins(T1, T2) ->
+  {D, {H, M, _}} = calendar:time_difference(T1, T2),
+  M+60*H+24*60*D.
+
+diff_secs(T1, T2) ->
+  60*diff_mins(T1, T2).

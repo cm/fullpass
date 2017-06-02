@@ -21,13 +21,21 @@ init([Module, T]) ->
 
 init([Module, T, Msg]) ->
   D = Module:init(T),
-  D2 = Module:handle(Msg, D),
-  cmcluster:sub(T),
-  {ok, #state{mod=Module, topic=T, data=D2}};
+  case Module:handle(Msg, D) of
+    {ok, D2} ->
+      cmcluster:sub(T),
+      {ok, #state{mod=Module, topic=T, data=D2}};
+    {stop, D2} ->
+      {stop, normal, #state{data=D2}}
+  end;
 
 init([Module, T, Msg, Timeout]) ->
-  {ok, State} = init([Module, T, Msg]),
-  {ok, State, Timeout}.
+  case init([Module, T, Msg]) of
+    {ok, State} ->
+      {ok, State, Timeout};
+    {stop, State} ->
+      {stop, normal, State}
+  end.
 
 handle_call(_Request, _From, State) ->
   {reply, ignored, State}.
@@ -37,15 +45,19 @@ handle_cast(_Msg, State) ->
 
 handle_info(timeout, #state{mod=Module, data=D}=State) ->
   case Module:timeout(D) of
-    {continue, D2} ->
+    {ok, D2} ->
       {noreply, State#state{data=D2}};
     {stop, D2} ->
       {stop, normal, State#state{data=D2}}
   end;
 
 handle_info(Msg, #state{mod=Module, data=D}=State) ->
-  D2 = Module:handle(Msg, D),
-  {noreply, State#state{data=D2}}.
+  case Module:handle(Msg, D) of 
+    {stop, D2} -> 
+      {stop, normal, State#state{data=D2}};
+    {ok, D2} ->
+      {noreply, State#state{data=D2}}
+  end.
 
 terminate(_Reason, _State) ->
   ok.

@@ -13,11 +13,13 @@ topic(_) ->
 
 init(_) -> [].
 
-handle({login, Code, From}=Msg, _) ->
+handle({login, Code, From}=Msg, Data) ->
   facebook:login(Code, fun(Profile) ->
-    cmcluster:event({profile, Profile, From})
+    cmcluster:event({profile, Profile, From}),
+    {ok, Data}
   end, fun(Error) ->
-    cmcluster:err(Msg, Error)
+    cmcluster:err(Msg, Error),
+    {ok, Data}
   end).
 
 missing(_) -> ignore.

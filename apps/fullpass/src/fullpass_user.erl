@@ -19,10 +19,11 @@ handle({profile, #{<<"id">> := Id}=P, Conn},
        #data{id=Id, sessions=_Sessions}=Data) ->
   SessionId = cmkit:uuid(),
   T = {session, SessionId},
-  Args = {SessionId, P, Conn},
+  Now = calendar:universal_time(),
+  Args = {SessionId, Now, P, Conn},
   E = {T, Args},
   cmcluster:event(E),
-  Data#data{profile=P}.
+  {ok, Data#data{profile=P}}.
 
 missing(_) ->
   ignore.
