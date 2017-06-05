@@ -90,5 +90,6 @@ handle_overload_command(_Cmd, _Sender, S) ->
 handle_overload_info(_Cmd, _) ->
   ok.
 
-terminate(_Reason, _S) ->
+terminate(_Reason, #data{table=T}) ->
+  dets:close(T),
   ok.
