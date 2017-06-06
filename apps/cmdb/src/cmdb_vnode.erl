@@ -51,7 +51,9 @@ handle_command({read, Id, K}, _, #data{table=T}=D) ->
     {error, E} ->
       {reply, {error, Id, E}, D};
     [{K, V}] ->
-      {reply, {ok, Id, V}, D}
+      {reply, {ok, Id, V}, D};
+    [] ->
+      {reply, {nodata, Id}, D}
   end.
 
 handle_handoff_command(_FoldReq, _, S) ->

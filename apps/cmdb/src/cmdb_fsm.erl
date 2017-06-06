@@ -47,7 +47,18 @@ waiting({ok, Id, V}, #data{k=K, id=Id, n=N, replies=R}=D) ->
   D2 = D#data{replies=R2},
   case length(R2) of
     N ->
-      cmdb:dispatch(K, V),
+      cmdb:cast(K, V),
+      {stop, normal, D2};
+    _ ->
+      {next_state, waiting, D2}
+  end;
+
+waiting({nodata, Id},  #data{k=K, id=Id, n=N, replies=R}=D) ->
+  R2 = [nodata|R], %TODO: resolve conflicts!
+  D2 = D#data{replies=R2},
+  case length(R2) of
+    N ->
+      cmdb:broadcast(nodata, K),
       {stop, normal, D2};
     _ ->
       {next_state, waiting, D2}
