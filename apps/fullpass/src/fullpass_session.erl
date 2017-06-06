@@ -1,23 +1,19 @@
 -module(fullpass_session).
--behaviour(cmaggregate).
--export([mode/0, init/1, handle/2, topic/0, topic/1, missing/1, timeout/1]).
+-behaviour(cmplugin).
+-export([init/1, data/2, key/1, missing/1, timeout/1]).
 -record(data, {id, profile, conn, created}).
 
-mode() ->
-  one_worker.
+key(default) -> session;
 
-topic() ->
-  session.
-
-topic({{session, Id},  {Id, _Created, _P, _Conn}, _}) ->
+key({{session, Id},  [Id, _Created, _P, _Conn]}) ->
   {session, Id}.
 
-init({session, Id}) ->
-  #data{id=Id, conn=none}.
-
-handle({{session, Id}, {Id, Created, P, Conn}, _}, #data{id=Id, conn=none}=Data) ->
+init({{session, Id}, [Id, Created, P, Conn]}) ->
   Conn ! Id,
-  {ok, Data#data{profile=P, conn=Conn, created=Created}};
+  {ok, Data#data{id=Id, 
+                 profile=P,
+                 conn=Conn, 
+                 created=Created}}.
 
 handle({{session, Id}, {Id, Created, P, _}}, #data{id=Id, conn=Conn}=Data) ->
   case expired(Created) of

@@ -1,29 +1,33 @@
 -module(fullpass_user).
--behaviour(cmaggregate).
--export([mode/0, init/1, handle/2, topic/0, topic/1, missing/1]).
--record(data, {id, profile, sessions}).
+-behaviour(cmplugin).
+-export([init/1, data/2, key/1, missing/1]).
+-record(data, {id, profile}).
 
-mode() ->
-  one_worker.
+key(default) ->
+  profile;
 
-topic() ->
-  profile.
-
-topic({profile, #{<<"id">> := Id}, _}) ->
+key({profile, [#{<<"id">> := Id}, _]}) ->
   {profile, Id}.
 
-init({profile, Id}) ->
-  #data{id=Id, sessions=#{}}.
+init({profile, [#{<<"id">> := Id}=P, Conn]}) ->
+  new_session(P, Conn),
+  {ok, #data{id=Id, profile=P}}.
 
-handle({profile, #{<<"id">> := Id}=P, Conn}, 
-       #data{id=Id, sessions=_Sessions}=Data) ->
-  SessionId = cmkit:uuid(),
-  T = {session, SessionId},
-  Now = calendar:universal_time(),
-  Args = {SessionId, Now, P, Conn},
-  E = {T, Args},
-  cmcluster:event(E),
-  {ok, Data#data{profile=P}}.
+data({profile, [#{<<"id">> := Id}=P, Conn]}, 
+       #data{id=Id}=D) ->
+  % TODO: notify all existings sessions
+  % in case the profile info (name, picture) has
+  % changed since their last login
+  new_session(P, Conn),
+  {ok, D#data{profile=P}}.
 
 missing(_) ->
   ignore.
+
+new_session(P, Conn) ->
+  Sid = cmkit:uuid(),
+  cmdb:write({session, Sid}, [Sid, 
+                              calendar:universal_time(),
+                              P,
+                              Conn]).
+

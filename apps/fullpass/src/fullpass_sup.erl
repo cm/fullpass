@@ -9,7 +9,7 @@ start_link() ->
 
 init([]) ->
   {ok, {{one_for_one, 1, 5}, [
-    cmkit:child_spec(login, cmaggregate, [fullpass_login], supervisor),
-    cmkit:child_spec(user, cmaggregate, [fullpass_user], supervisor),
-    cmkit:child_spec(session, cmaggregate, [fullpass_session], supervisor)
+    cmkit:child_spec(login, cmplugin, [fullpass_login], supervisor),
+    cmkit:child_spec(user, cmplugin, [fullpass_user], supervisor)
+  %  cmkit:child_spec(session, cmaggregate, [fullpass_session], supervisor)
   ]}}.

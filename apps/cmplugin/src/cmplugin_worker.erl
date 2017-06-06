@@ -16,10 +16,10 @@ start_link(Module, K, Initial, Timeout) ->
   gen_server:start_link(?MODULE, [Module, K, Initial, Timeout], []).
 
 init([Module, K, V]) ->
-  case Module:init(K, V) of
+  case Module:init(V) of
     {ok, D} ->
       cmdb:sub(K),
-      {ok, #state{mod=Module, k=K, data=D}};
+      {ok, #state{mod=Module, key=K, data=D}};
     {stop, D} ->
       {stop, normal, #state{data=D}}
   end;

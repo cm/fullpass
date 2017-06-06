@@ -1,24 +1,17 @@
 -module(fullpass_login).
--behaviour(cmaggregate).
--export([mode/0, init/1, handle/2, topic/0, topic/1, missing/1]).
+-behaviour(cmplugin).
+-export([init/1, data/2, key/1, missing/1]).
 
-mode() ->
-  any_worker.
-
-topic() ->
-  login.
-
-topic(_) ->
-  login.
+key(_) -> login.
 
 init(_) -> [].
 
-handle({login, Code, From}=Msg, Data) ->
+data({login, [Code, From]}, Data) ->
   facebook:login(Code, fun(Profile) ->
-    cmcluster:event({profile, Profile, From}),
+    cmdb:cast(profile, [Profile, From]),
     {ok, Data}
   end, fun(Error) ->
-    cmcluster:err(Msg, Error),
+    cmdb:cast(error, Error),
     {ok, Data}
   end).
 

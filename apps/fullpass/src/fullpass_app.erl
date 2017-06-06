@@ -19,7 +19,7 @@ do([<<"info">>]) ->
 do([<<"login">>]) ->
   {anon, [{text, <<"code">>}], 
    fun(_, _, [Code]) ->
-       cmcluster:cmd({login, Code})
+       cmdb:cast(login, [Code, self()])
    end, 
    fun(_, _, {_, _}) -> 
        continue;
