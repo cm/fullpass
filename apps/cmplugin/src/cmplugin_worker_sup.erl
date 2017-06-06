@@ -1,4 +1,4 @@
--module(cmaggregate_worker_sup).
+-module(cmplugin_worker_sup).
 -behaviour(supervisor).
 -export([start_link/1, registered_name/1]).
 -export([init/1]).
@@ -11,5 +11,5 @@ start_link(Mod) ->
 
 init([Mod]) ->
   {ok, {{simple_one_for_one, 1, 5}, [
-                                     cmkit:child_spec(cmaggregate_worker, [Mod], worker)
+                                     cmkit:child_spec(cmplugin_worker, [Mod], worker)
                                     ]}}.

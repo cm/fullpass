@@ -1,7 +1,7 @@
 cmplugin
 =====
 
-An OTP application
+An OTP library
 
 Build
 -----

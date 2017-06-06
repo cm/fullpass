@@ -4,7 +4,7 @@
 -export([behaviour_info/1]).
 
 behaviour_info(callbacks) ->
-  [{key, 0}, {key, 1}, {init, 1}, {data, 2}, {missing, 1}].
+  [{key, 0}, {key, 1}, {init, 2}, {data, 2}, {missing, 1}].
 
 start_link(Module) ->
   supervisor:start_link(?MODULE, [Module]).
