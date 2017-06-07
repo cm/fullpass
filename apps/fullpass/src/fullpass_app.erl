@@ -31,7 +31,7 @@ do([<<"login">>]) ->
 do([<<"session">>]) ->
   {anon, [{text, <<"id">>}],
    fun(_, _, [Id]) ->
-       cmcluster:query({{session, Id}, none})
+       cmdb:cast({session, Id}, [self()])
    end,
    fun(_, _, {ok, processing}) ->
       continue;

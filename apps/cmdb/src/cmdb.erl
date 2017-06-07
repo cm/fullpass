@@ -18,7 +18,7 @@ cast(K, V) ->
   catch
     _:no_subscribers_available ->
       try 
-        ebus:dispatch(nosub, {nosub, {K, V}}) 
+        ebus:pub(nosub, {nosub, {K, V}}) 
       catch
         _:no_subscribers_available ->
           io:format("Nobody listening for missing events~n  for key:~p~n  and value: ~p~n", [K, V])

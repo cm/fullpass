@@ -26,8 +26,6 @@ missing(_) ->
 
 new_session(P, Conn) ->
   Sid = cmkit:uuid(),
-  cmdb:write({session, Sid}, [Sid, 
-                              calendar:universal_time(),
+  cmdb:write({session, Sid}, [calendar:universal_time(),
                               P,
                               Conn]).
-

@@ -4,10 +4,14 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -record(state, {mod, key, data}).
 
+start(Module, K, [_|_]=V) ->
+  Sup = cmplugin_worker_sup:registered_name(Module),
+  supervisor:start_child(Sup, [K|V]);
 
 start(Module, K, V) ->
   Sup = cmplugin_worker_sup:registered_name(Module),
   supervisor:start_child(Sup, [K, V]).
+
 
 start_link(Module, K, V) ->
   gen_server:start_link(?MODULE, [Module, K, V], []).
@@ -21,6 +25,7 @@ init([Module, K, V]) ->
       cmdb:sub(K),
       {ok, #state{mod=Module, key=K, data=D}};
     {stop, D} ->
+      io:format("stopped ~p~n", [Module]),
       {stop, normal, #state{data=D}}
   end;
 

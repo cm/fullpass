@@ -8,8 +8,13 @@ start_link() ->
   supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
-  {ok, {{one_for_one, 1, 5}, [
-    cmkit:child_spec(login, cmplugin, [fullpass_login], supervisor),
-    cmkit:child_spec(user, cmplugin, [fullpass_user], supervisor)
-  %  cmkit:child_spec(session, cmaggregate, [fullpass_session], supervisor)
-  ]}}.
+  {ok, {{one_for_one, 1, 5}, plugin_specs([{login, fullpass_login},
+                                           {user, fullpass_user},
+                                           {session, fullpass_session}
+                                          ])}}.
+
+plugin_specs(Plugins) ->
+  lists:map(fun({Name, Module}) ->
+    cmkit:child_spec(Name, cmplugin, [Module], supervisor)
+  end, Plugins).
+

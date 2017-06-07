@@ -33,7 +33,6 @@ handle_info({nosub, Msg}, #state{module=Module}=State) ->
   end;
 
 handle_info(Msg, #state{module=Module, key=K}=D) ->
-  io:format("server at key: ~p~n  got msg: ~p~n", [K, Msg]),
   K2 = Module:key(Msg),
   case K2 of
     K ->

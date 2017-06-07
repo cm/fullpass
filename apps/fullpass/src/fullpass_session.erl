@@ -5,18 +5,23 @@
 
 key(default) -> session;
 
-key({{session, Id},  [Id, _Created, _P, _Conn]}) ->
+key({{session, Id}, _}) ->
   {session, Id}.
 
-init({{session, Id}, [Id, Created, P, Conn]}) ->
+init({{session, Id}, [Since, P, Conn]}) ->
   Conn ! Id,
-  {ok, Data#data{id=Id, 
-                 profile=P,
-                 conn=Conn, 
-                 created=Created}}.
+  {ok, #data{id=Id, 
+             profile=P,
+             conn=Conn, 
+             created=Since}};
 
-handle({{session, Id}, {Id, Created, P, _}}, #data{id=Id, conn=Conn}=Data) ->
-  case expired(Created) of
+init({{session, Id}, Conn}) ->
+  {ok, #data{id=Id,
+             conn=Conn}}.
+
+data({{session, Id}, [Since, P, _]}, 
+     #data{id=Id, conn=Conn}=Data) ->
+  case expired(Since) of
     false ->
       Conn ! P,
       {ok, Data#data{profile=P}};
@@ -25,24 +30,22 @@ handle({{session, Id}, {Id, Created, P, _}}, #data{id=Id, conn=Conn}=Data) ->
       {stop, Data}
   end;
 
-handle({{session, Id}, none, Conn}, #data{id=Id, profile=P, created=Created}=Data) ->
-  case expired(Created) of
+data({{session, Id}, [Conn]}, 
+       #data{id=Id, profile=P, created=Since}=Data) ->
+  case expired(Since) of
     false ->
       Conn ! P,
       {ok, Data#data{conn=Conn}};
     true ->
       Conn ! #{session => expired},
       {stop, Data}
-  end;
+  end.
 
-handle({{session, Id}, Conn}, #data{id=Id, conn=none}=Data) ->
-  {ok, Data#data{conn=Conn}}.
+missing({{session, _}=K, [Conn]}) ->
+  {read, K, {K, Conn}};
 
-missing({{session, _}=T, none, Conn}) ->
-  {replay, {T, {T, Conn}}};
-
-missing({{session, _}, _, _Conn}) -> 
-  allocate;
+missing({{session, _}, [_, _, _]}) ->
+  create;
 
 missing(_) -> 
   ignore.

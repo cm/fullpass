@@ -10,6 +10,9 @@ start_link(Mod) ->
   supervisor:start_link({local, registered_name(Mod)}, ?MODULE, [Mod]).
 
 init([Mod]) ->
-  {ok, {{simple_one_for_one, 1, 5}, [
-                                     cmkit:child_spec(cmplugin_worker, [Mod], worker)
+  {ok, {{simple_one_for_one, 1, 1}, [
+                                     child_spec(cmplugin_worker, [Mod])
                                     ]}}.
+
+child_spec(M, Args) ->
+  {M, {M, start_link, Args}, temporary, brutal_kill, worker, [M]}.
