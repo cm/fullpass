@@ -13,19 +13,19 @@ start_link(Module) ->
   gen_server:start_link(?MODULE, [Module], []).
 
 init([Module]) ->
-  cmcluster:sub(nosub),
+  cmdb:sub(nosub),
   K = Module:key(default),
-  cmcluster:sub(K),
+  cmdb:sub(K),
   {ok, #state{module=Module, key=K}}.
 
-handle_info({nosub, Msg}, #state{module=Module}=State) ->
+handle_info({nosub, {_, V}=Msg}, #state{module=Module}=State) ->
   case Module:missing(Msg) of
     create ->
       K = Module:key(Msg),
-      cmplugin_worker:start(Module, K, Msg),
+      cmplugin_worker:start(Module, K, V),
       {noreply, State};
     {read, K, Initial} ->
-      cmplugin_worker:start(Module, K, [Initial, 500]), 
+      cmplugin_worker:start(Module, K, Initial, 500), 
       cmdb:read(K),
       {noreply, State};
     ignore ->

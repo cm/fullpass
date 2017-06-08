@@ -1,12 +1,13 @@
 -module(cmplugin_worker).
 -behaviour(gen_server).
--export([start/3, start_link/3, start_link/4]).
+-export([start/3, start/4]).
+-export([start_link/3, start_link/4]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -record(state, {mod, key, data}).
 
-start(Module, K, [_|_]=V) ->
+start(Module, K, V, Timeout) ->
   Sup = cmplugin_worker_sup:registered_name(Module),
-  supervisor:start_child(Sup, [K|V]);
+  supervisor:start_child(Sup, [K, V, Timeout]).
 
 start(Module, K, V) ->
   Sup = cmplugin_worker_sup:registered_name(Module),

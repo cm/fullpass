@@ -57,13 +57,13 @@ init_http(Req, #state{handler = Handler}=State) ->
                                   loop(user, Input, Act, State2)
                               end);
       
-    _ -> not_found(Req)
+    _ -> not_implemented(Req)
   end.
 
 with_input(Params, Req, Next) ->
   case input(Params, Req) of
     {errors, Errors} -> 
-      invalid(Req, Errors);
+      invalid(Errors, Req);
     {ok, Input} ->
       Next(Input)
   end.
@@ -85,6 +85,12 @@ loop(User, Params, Act, #state{app=App, req=Req}=State) ->
   Act(App, User, Params),
   State2 = State#state{user=User, params=Params},
   {cowboy_loop, Req, State2, hibernate}.
+
+info(session_not_found, Req, State) ->
+  {stop, not_found(not_found, Req), State};
+
+info(session_expired, Req, State) ->
+  {stop, forbidden(expired, Req), State};
 
 info(Msg, Req, #state{spec=Spec, app=App}=State) ->
   {_, _, _, React} = Spec,
@@ -130,6 +136,12 @@ websocket_handle({text, Text}, #state{handler=Handler, params=Input0}=State) ->
     _ ->
       {stop, State}
   end.
+
+websocket_info(session_not_found, State) ->
+  ws_error(#{reason => session_not_found}, State);
+
+websocket_info(session_expired, State) ->
+  ws_error(#{reason => session_expired}, State);
 
 websocket_info(Msg, #state{app=App, spec={_, _, _, React}}=State) ->
   case React(App, user, Msg) of
@@ -177,20 +189,23 @@ debug(Prefix, Data, #state{debug=Debug}) ->
       ok
   end.
 
-
-
 ok(Body, _Headers, Req) ->
   reply(200, Body, [], Req).
 
 err(Reason, Req)->
   reply(500, Reason, [], Req).
 
-%forbidden(Req) -> reply(403, Req).
-not_found(Req) -> reply(404, Req).
-invalid(Req, R) -> reply(400, #{reason => R}, [], Req).
+forbidden(Reason, Req) -> 
+  reply(403, #{reason => Reason}, [], Req).
 
-reply(Status, Req) ->
-  reply(Status, [], [], Req).
+not_found(Reason, Req) -> 
+  reply(404, #{reason => Reason}, [], Req).
+
+invalid(Reason, Req) -> 
+  reply(400, #{reason => Reason}, [], Req).
+
+not_implemented(Req) ->
+  reply(501, #{reason => not_implemented}, [], Req).
 
 reply(Status, Body, _Headers, Req) ->
   cowboy_req:reply(Status, #{
@@ -226,17 +241,22 @@ input(Spec, Req) ->
               Input3 = read_session_cookie(Input2, Req),
               cmkit:parse(Spec, Input3)
           end;
-        _ -> invalid(Req2, content_type)
+        _ -> invalid(content_type, Req2)
       end
   end.   
 
-read_session_cookie(Input, Req) ->
+read_session_cookie(Req) ->
   Cookies = cowboy_req:parse_cookies(Req),
-  case lists:keyfind(<<"token">>, 1, Cookies) of
-    {_, T} -> maps:put(<<"token">>, T, Input);
-    false -> Input
+  case lists:keyfind(<<"cmtoken">>, 1, Cookies) of
+    {_, T} -> T;
+    false -> false
   end.
-  
+
+read_session_cookie(Input, Req) ->
+  case read_session_cookie(Req) of
+    false -> Input;
+    T -> maps:put(<<"cmtoken">>, T, Input)
+  end.
 
 parse_qs(Req) ->
   lists:foldl(fun({K, V}, Map) ->

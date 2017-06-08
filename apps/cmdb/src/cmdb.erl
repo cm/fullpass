@@ -14,7 +14,7 @@ broadcast(K, V) ->
 
 cast(K, V) ->
   try
-    ebus:dispatch(K, {K, V})
+    ebus:dispatch(K, V)
   catch
     _:no_subscribers_available ->
       try 

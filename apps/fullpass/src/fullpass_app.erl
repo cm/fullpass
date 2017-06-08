@@ -21,21 +21,18 @@ do([<<"login">>]) ->
    fun(_, _, [Code]) ->
        cmdb:cast(login, [Code, self()])
    end, 
-   fun(_, _, {_, _}) -> 
-       continue;
-      (_, _, SessionId) -> 
+   fun(_, _, SessionId) -> 
        {redirect, 
-        cmkit:config(app_url, ?APP), #{<<"cmtoken">> => SessionId}}
+        cmkit:config(app_url, ?APP), 
+        #{<<"cmtoken">> => SessionId}}
    end};
 
 do([<<"session">>]) ->
   {anon, [{text, <<"id">>}],
    fun(_, _, [Id]) ->
-       cmdb:cast({session, Id}, [self()])
+       cmdb:cast({session, Id}, [Id, self()])
    end,
-   fun(_, _, {ok, processing}) ->
-      continue;
-      (_, _, Profile) ->
+   fun(_, _, Profile) ->
        {data, Profile}
    end};
 

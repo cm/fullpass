@@ -6,14 +6,14 @@
 key(default) ->
   profile;
 
-key({profile, [#{<<"id">> := Id}, _]}) ->
+key([#{<<"id">> := Id}, _Conn]) ->
   {profile, Id}.
 
-init({profile, [#{<<"id">> := Id}=P, Conn]}) ->
+init([#{<<"id">> := Id}=P, Conn]) ->
   new_session(P, Conn),
   {ok, #data{id=Id, profile=P}}.
 
-data({profile, [#{<<"id">> := Id}=P, Conn]}, 
+data([#{<<"id">> := Id}=P, Conn], 
        #data{id=Id}=D) ->
   % TODO: notify all existings sessions
   % in case the profile info (name, picture) has
@@ -26,6 +26,7 @@ missing(_) ->
 
 new_session(P, Conn) ->
   Sid = cmkit:uuid(),
-  cmdb:write({session, Sid}, [calendar:universal_time(),
+  cmdb:write({session, Sid}, [Sid, 
+                              calendar:universal_time(),
                               P,
                               Conn]).

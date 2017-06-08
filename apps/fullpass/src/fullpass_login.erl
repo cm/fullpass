@@ -6,7 +6,7 @@ key(_) -> login.
 
 init(_) -> [].
 
-data({login, [Code, From]}, Data) ->
+data([Code, From], Data) ->
   facebook:login(Code, fun(Profile) ->
     cmdb:cast(profile, [Profile, From]),
     {ok, Data}
