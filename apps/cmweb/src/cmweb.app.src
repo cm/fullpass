@@ -2,9 +2,13 @@
  [{description, "An OTP library"},
   {vsn, "0.1.0"},
   {registered, []},
+  {mod, {cmweb_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cowboy,
+    uuid,
+    os_mon
    ]},
   {env,[]},
   {modules, []},

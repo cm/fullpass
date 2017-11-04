@@ -1,0 +1,11 @@
+-module(cmrtc_answer).
+-export([spec/0]).
+-export([anonymous/1]).
+
+spec() ->
+    {anonymous, [{text, <<"room">>}, {text, <<"sdp">>}]}.
+
+anonymous([Conn, Room, Sdp]) ->
+    io:format("got answer: ~p~n", [Sdp]),
+    cmcluster:dispatch({room, Room}, [answer, Sdp, Conn]).
+

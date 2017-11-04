@@ -5,8 +5,7 @@
   {applications,
    [kernel,
     stdlib,
-    jiffy,
-    ebus,
+    jsone,
     cowboy,
     uuid,
     os_mon

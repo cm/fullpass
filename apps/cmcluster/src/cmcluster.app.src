@@ -1,0 +1,19 @@
+{application, cmcluster,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { cmcluster_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    cmkit,
+    cmdb,
+    cmweb
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

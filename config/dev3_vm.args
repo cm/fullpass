@@ -1,4 +1,4 @@
--name fullpass@127.0.0.1
--setcookie fullpass_cookie
+-sname dev3 
+-setcookie cmrtc
 +K true
 +A30

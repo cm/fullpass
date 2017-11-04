@@ -1,0 +1,20 @@
+{application, cmrtc,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    cmdb,
+    cmkit,
+    cmweb,
+    cmsocial,
+    cmplaces
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, []},
+  {links, []}
+ ]}.

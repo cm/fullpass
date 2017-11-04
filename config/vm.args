@@ -1,6 +1,5 @@
--sname fullpass
-
--setcookie fullpass_cookie
+-sname cmrtc
+-setcookie cmrtc
 
 +K true
 +A30

@@ -1,7 +1,7 @@
 cmweb
 =====
 
-An OTP library
+An OTP application
 
 Build
 -----

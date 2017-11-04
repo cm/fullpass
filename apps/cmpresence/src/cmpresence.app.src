@@ -1,0 +1,18 @@
+{application, cmpresence,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { cmpresence_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    cmdb,
+    cmsocial
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

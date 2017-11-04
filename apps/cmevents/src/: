@@ -1,0 +1,9 @@
+-module(cmevents_app).
+-behaviour(application).
+-export([start/2, stop/1]).
+
+start(_, _) ->
+    cmevents:register_plugins().
+
+stop(_) ->
+  ok.

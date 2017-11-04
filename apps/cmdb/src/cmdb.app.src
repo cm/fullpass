@@ -5,7 +5,9 @@
   {mod, { cmdb_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    mnesia,
+    rbeacon
    ]},
   {env,[]},
   {modules, []},
