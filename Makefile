@@ -4,4 +4,4 @@ ui:
 	@cd apps/cmui/ui; yarn start
 
 release:
-	@rebar3 as prod tar
+	@rebar3 release
