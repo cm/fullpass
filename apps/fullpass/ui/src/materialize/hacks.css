@@ -1,0 +1,4 @@
+.card, input:focus, .btn, .btn:focus {
+    box-shadow: none;
+    -webkit-box-shadow: none !important; 
+}
