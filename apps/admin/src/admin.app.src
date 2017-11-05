@@ -1,8 +1,8 @@
-{application, weekonekt,
+{application, admin,
  [{description, "An OTP application"},
   {vsn, "0.1.0"},
   {registered, []},
-  {mod, { weekonekt_app, []}},
+  {mod, { admin_app, []}},
   {applications,
    [kernel,
     stdlib
