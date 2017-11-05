@@ -4,8 +4,11 @@ console:
 dist:
 	@cd apps/$(app)/ui; yarn build; cp dist/app.js ../../$(app)/priv
 
-ui:
-	@cd apps/$(app)/ui; yarn start;
+weekonekt:
+	@cd apps/weekonekt/ui; yarn start;
+
+fullpass:
+	@cd apps/fullpass/ui; yarn start;
 
 push:
 	@git add .; git commit -am 'latest changes'; git push

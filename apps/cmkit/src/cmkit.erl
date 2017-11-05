@@ -5,30 +5,16 @@ log(Data)->
     io:format("[LOG] ~p~n", [Data]).
 
 config(Key, App) ->
-  case application:get_env(App, Key) of
-    undefined -> undefined;
-    {ok, Values} ->
-      case Values of 
-        [_|_] -> 
-          case proplists:get_value(env(), Values) of
-            undefined -> proplists:get_value(default, Values);
-            V -> V
-          end;
-        V -> V
-      end
-  end.
+    case application:get_env(App, Key) of
+        undefined -> undefined;
+        {ok, Val} -> Val
+    end.
 
 config(Key, App, Default) ->
-  case config(Key, App) of
-    undefined -> Default;
-    Value -> Value
-  end.
-
-env() ->
-  case os:getenv("CMENV", "dev") of
-    "prod" -> prod;
-    _ -> dev
-  end.
+    case config(Key, App) of 
+        undefined -> Default;
+        Val -> Val
+    end.
 
 jsond(Bin) ->
     try jsone:decode(Bin, [{object_format, map}])
