@@ -8,5 +8,5 @@ ui:
 	@cd apps/$(app)/ui; yarn start;
 
 push:
-	@git commit -am '$(msg)'; git push
+	@git add .; git commit -am 'latest changes'; git push
 
