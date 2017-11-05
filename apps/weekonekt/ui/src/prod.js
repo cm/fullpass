@@ -1,5 +1,5 @@
 require( "./common" )({
-    api: "http://localhost:8080/api",
-    ws: "ws://localhost:8080/ws",
-    files: "http://localhost:8080/files"
+    api: "http://weekonekt.com/api",
+    ws: "ws://weekonekt.com/ws",
+    files: "http://weekonekt.com/files"
 });
