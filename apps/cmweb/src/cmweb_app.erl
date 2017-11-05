@@ -9,12 +9,16 @@
 start(_StartType, _StartArgs) ->
   case cmweb_sup:start_link() of 
     {ok, Pid } ->
-      App = cmkit:config(app, cmweb, cmweb),
-      Port = cmkit:config(port, cmweb, 8080),
-      Acceptors = cmkit:config(acceptors, cmweb, 1),
-      Handlers = handlers(),
-      listen(App, Port, Acceptors, Handlers),
-      {ok, Pid};      
+        Handlers = handlers(),
+        Apps = cmkit:config(apps, cmweb), 
+        [ listen(App, Port, Acceptors, Handlers)
+          || {App, Port, Acceptors} <- Apps],
+
+      %  App = cmkit:config(app, cmweb, cmweb),
+      %Port = cmkit:config(port, cmweb, 8080),
+      %Acceptors = cmkit:config(acceptors, cmweb, 1),
+      %listen(App, Port, Acceptors, Handlers),
+        {ok, Pid};      
     Other -> Other
   end.
 
@@ -23,10 +27,10 @@ stop(_State) ->
 
 listen(App, Port, Acceptors, Handlers) ->
     Dispatch = cowboy_router:compile([{'_', routes(App, Handlers)}]),
-    {ok, _} = cowboy:start_clear(my_http_listener, 
+    {ok, _} = cowboy:start_clear(App, 
                                  Acceptors, [{port, Port}],
-                                 #{env => #{dispatch => Dispatch}}).
-    %cmkit:log({cmweb, Port, Handlers}).
+                                 #{env => #{dispatch => Dispatch}}),
+    cmkit:log({cmweb, started, App, Port}).
 
 routes(App, Handlers) ->
   Debug = cmkit:config(debug, App, false),
