@@ -2,9 +2,9 @@
 -export([cmdb_tables/0, cmevents_plugins/0]).
 
 cmdb_tables() ->
-    [{users, set, ram_copies}, 
-     {names, bag, ram_copies},
-     {passwords, set, ram_copies},
+    [{users, set, disc_copies}, 
+     {names, bag, disc_copies},
+     {passwords, set, disc_copies},
      {connections, bag, ram_copies}, 
      {invites, set, ram_copies}, 
      {invites_sent, bag, ram_copies}, 

@@ -106,7 +106,7 @@ redirect(Loc, Cookies, Req, State) ->
   }, Req2), State}.
 
 reply(Status, Body, _Headers, Req) ->
-  cowboy_req:reply(Status, #{
+    cowboy_req:reply(Status, #{
                            <<"content-type">> => <<"application/json">>
                            }, cmkit:jsone(Body), Req).
 

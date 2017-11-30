@@ -1,5 +1,4 @@
 -module(cmsocial_login).
--behaviour(cmweb).
 -export([spec/0, key/0, do/2]).
 
 spec() ->
@@ -18,7 +17,7 @@ do(#{<<"username">> := U,
                         {ok, Profile} ->
                             case cmdb:u(connections, Id, has, self()) of
                                 ok -> 
-                                    {ok, profile, Profile, Profile};
+                                    {ok, login, Profile, Profile};
                                 conflict ->
                                     {error, conflict, S};
                                 {error, E} ->

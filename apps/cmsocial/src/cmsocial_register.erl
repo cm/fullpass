@@ -1,5 +1,4 @@
 -module(cmsocial_register).
--behaviour(cmweb).
 -export([spec/0, key/0, do/2]).
 
 spec() ->
