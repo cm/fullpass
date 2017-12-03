@@ -2,59 +2,92 @@
 -behaviour(gen_statem).
 -export([start_link/0]).
 -export([init/1, callback_mode/0, terminate/3]).
--export([all_nodes/0, join/1]).
--export([ready/3]).
--record(data, {name, cluster, db}).
+-export([all_nodes/0]).
+-export([red/3, yellow/3, green/3]).
+-record(data, {}).
 
 callback_mode() ->
     state_functions.
 
 start_link() ->
-    NodeName = cmkit:config(nodename, cmcluster),
-    ClusterName = cmkit:config(cluster, cmcluster),
-    WorkDir = cmkit:config(workdir, cmcluster),
-    gen_statem:start_link({local, ?MODULE}, ?MODULE, [NodeName, 
-                                                      ClusterName, 
-                                                      WorkDir], []).
+    gen_statem:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 all_nodes() -> 
     {ok, gen_statem:call(?MODULE, nodes)}.
 
-join(Node) -> 
-    gen_statem:call(?MODULE, {join, Node}).
+init([]) ->
+    net_kernel:monitor_nodes(true),
+    net_adm:world(),
+    {ok, red, #data{}}.
 
-init([NodeName, ClusterName, WorkDir]) ->
-    DbFile = filename:join([WorkDir, "data.db"]),
-    case dets:open_file(NodeName, [{file, DbFile}]) of
-        {ok, NodeName} ->
-            cmkit:log({cmcluster, NodeName, ok}),
-            {ok, ready, #data{name=NodeName, cluster=ClusterName, db=DbFile}};        
-        {error, Reason} ->
-            cmkit:log({cmcluster, NodeName, error, Reason}),
-            {stop, Reason}             
-    end.
+red(info, {nodeup, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, State, nodeup, Node}),
+    {next_state, State, Data};
 
-ready({call, From}, nodes, Data) ->
-    Nodes = info(nodes, Data),
-    {keep_state,Data,[{reply,From, Nodes}]}.
+red(info, {nodedown, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, State, nodeup, Node}),
+    {next_state, State, Data};
 
-terminate(Reason, _, #data{name=NodeName}) ->
-    case dets:close(NodeName) of
-        ok -> 
-            cmkit:log({cmcluster, NodeName, closed, Reason});
-        {error, Reason} ->
-            cmkit:log({cmcluster, NodeName, error, Reason})
-    end.
+red({call, From}, nodes, Data) ->
+    Nodes = info(nodes, nothing),
+    {keep_state, Data, {reply, From, Nodes}}.
 
-info(nodes, #data{cluster=ClusterName}) -> 
+
+yellow(info, {nodeup, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, State, nodeup, Node}),
+    {next_state, State, Data};
+
+yellow(info, {nodedown, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, nodeup, Node}),
+    {next_state, State, Data};
+
+yellow({call, From}, nodes, Data) ->
+    Nodes = info(nodes, nothing),
+    {keep_state, Data, {reply, From, Nodes}}.
+
+green(info, {nodeup, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, nodeup, Node}),
+    {next_state, State, Data};
+
+green(info, {nodedown, Node}, Data) ->
+    State = state(),
+    cmkit:log({cmcluster, nodeup, Node}),
+    {next_state, State, Data};
+
+green({call, From}, nodes, Data) ->
+    Nodes = info(nodes, nothing),
+    {keep_state, Data, {reply, From, Nodes}}.
+
+state() ->
+    Nodes = length(nodes()),
+    Hosts = length(net_adm:host_file()),
+    state(Nodes, Hosts).
+
+state(Nodes, Hosts) when Nodes == Hosts ->
+    green;
+
+state(Nodes, Hosts) when Nodes >= Hosts/2 ->
+    yellow;
+
+state(_, _) -> 
+    red.
+
+
+terminate(Reason, _, #data{}) ->
+    cmkit:log({cluster_server, node(), terminated, Reason}),
+    ok.
+
+info(nodes, _) -> 
     {ok, Hostname} = inet:gethostname(),
     {ok, {hostent, Hostname, [], inet, 4, Ips}} = inet:gethostbyname(Hostname),
     [#{ name => cmkit:to_bin(node()),
         sname => cmkit:sname(),
-        cluster => cmkit:to_bin(ClusterName),
         hostname => cmkit:to_bin(Hostname),
         ips => lists:map(fun cmkit:to_bin/1, Ips),
+        state => state(),
         perf => cmperf:stats() }].
-
-
-
