@@ -84,7 +84,7 @@ terminate(Reason, _, #data{}) ->
 
 info(nodes, _) -> 
     {ok, Hostname} = inet:gethostname(),
-    {ok, {hostent, Hostname, [], inet, 4, Ips}} = inet:gethostbyname(Hostname),
+    {ok, {hostent, Hostname, _, inet, 4, Ips}} = inet:gethostbyname(Hostname),
     [#{ name => cmkit:to_bin(node()),
         sname => cmkit:sname(),
         hostname => cmkit:to_bin(Hostname),
