@@ -27,7 +27,7 @@ red(info, {nodeup, Node}, Data) ->
 
 red(info, {nodedown, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, State, nodeup, Node}),
+    cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
 red({call, From}, nodes, Data) ->
@@ -42,7 +42,7 @@ yellow(info, {nodeup, Node}, Data) ->
 
 yellow(info, {nodedown, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, nodeup, Node}),
+    cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
 yellow({call, From}, nodes, Data) ->
@@ -51,12 +51,12 @@ yellow({call, From}, nodes, Data) ->
 
 green(info, {nodeup, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, nodeup, Node}),
+    cmkit:log({cmcluster, State, nodeup, Node}),
     {next_state, State, Data};
 
 green(info, {nodedown, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, nodeup, Node}),
+    cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
 green({call, From}, nodes, Data) ->
@@ -68,7 +68,7 @@ state() ->
     Hosts = length(net_adm:host_file()),
     state(Nodes, Hosts).
 
-state(Nodes, Hosts) when Nodes == Hosts ->
+state(Nodes, Hosts) when Nodes >= Hosts ->
     green;
 
 state(Nodes, Hosts) when Nodes >= Hosts/2 ->
