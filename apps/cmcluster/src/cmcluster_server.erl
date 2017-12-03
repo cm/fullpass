@@ -64,9 +64,9 @@ green({call, From}, nodes, Data) ->
     {keep_state, Data, {reply, From, Nodes}}.
 
 state() ->
-    Nodes = length(nodes()),
-    Hosts = length(net_adm:host_file()),
-    state(Nodes, Hosts).
+    Hosts = net_adm:host_file(),
+    Nodes = cmkit:intersection(Hosts, nodes()),
+    state(length(Nodes), length(Hosts)).
 
 state(Nodes, Hosts) when Nodes >= Hosts ->
     green;
