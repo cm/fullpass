@@ -20,7 +20,14 @@ init([]) ->
     pg2:create(cmcluster),
     net_kernel:monitor_nodes(true),
     net_adm:world(),
-    {ok, red, #data{}}.
+    case length(expected_nodes()) of
+        1 -> 
+            join(green),
+            cmkit:log({cmcluster, green, standalone}),
+            {ok, green, #data{}};
+        _ -> 
+            {ok, red, #data{}}
+    end.
 
 red(info, {nodeup, Node}, Data) ->
     State = state(),
