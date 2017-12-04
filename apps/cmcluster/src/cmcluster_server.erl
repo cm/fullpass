@@ -64,11 +64,12 @@ green({call, From}, nodes, Data) ->
     {keep_state, Data, {reply, From, Nodes}}.
 
 expected_nodes() ->
+    Sname = erlang:binary_to_list(cmkit:sname()),
     [ erlang:list_to_atom(
-                        string:join([ "fullpass",
-                                      erlang:atom_to_list(H)
-                                    ], "@")
-                       ) || H <- net_adm:host_file()].
+        string:join([ Sname,
+                      erlang:atom_to_list(H)
+                    ], "@")
+       ) || H <- net_adm:host_file()].
 
 
 state() ->
