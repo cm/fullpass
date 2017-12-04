@@ -68,7 +68,7 @@ green({call, From}, nodes, Data) ->
 
 join(green) ->
     LocalMembers = pg2:get_local_members(cmcluster),
-    case lists:is_member(self(), LocalMembers) of
+    case lists:member(self(), LocalMembers) of
         true -> 
             {ok, already_in_cluster};
         false ->
