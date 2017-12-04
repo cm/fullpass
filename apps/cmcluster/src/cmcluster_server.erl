@@ -13,7 +13,8 @@ start_link() ->
     gen_statem:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 all_nodes() -> 
-    {ok, gen_statem:call(?MODULE, nodes)}.
+    Members = pg2:get_members(cmcluster),
+    {ok, [ M ! nodes || M <- Members ]}.
 
 init([]) ->
     pg2:create(cmcluster),
