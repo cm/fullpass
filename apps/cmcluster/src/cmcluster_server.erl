@@ -14,9 +14,7 @@ start_link() ->
 
 all_nodes() -> 
     Members = pg2:get_members(cmcluster),
-    {ok, lists:map(fun(M) ->
-                           gen_statem:call(M, nodes)
-                   end, Members)}.
+    {ok, [ gen_statem:call(M, nodes) || M <- Members ]}.
 
 init([]) ->
     pg2:create(cmcluster),
@@ -114,9 +112,9 @@ terminate(Reason, _, #data{}) ->
 info(nodes, _) -> 
     {ok, Hostname} = inet:gethostname(),
     {ok, {hostent, Hostname, _, inet, 4, Ips}} = inet:gethostbyname(Hostname),
-    [#{ name => cmkit:to_bin(node()),
+    #{ name => cmkit:to_bin(node()),
         sname => cmkit:sname(),
         hostname => cmkit:to_bin(Hostname),
         ips => lists:map(fun cmkit:to_bin/1, Ips),
         health => state(),
-        perf => cmperf:stats() }].
+        perf => cmperf:stats() }.
