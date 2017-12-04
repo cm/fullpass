@@ -73,7 +73,7 @@ expected_nodes() ->
 
 state() ->
     ExpectedNodes = expected_nodes(),
-    Nodes = cmkit:intersection(ExpectedNodes, nodes()),
+    Nodes = cmkit:intersection(ExpectedNodes, [node()|nodes()]),
     state(length(Nodes), length(ExpectedNodes)).
 
 state(Nodes, Hosts) when Nodes >= Hosts ->
