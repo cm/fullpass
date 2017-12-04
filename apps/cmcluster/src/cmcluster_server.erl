@@ -53,7 +53,8 @@ yellow({call, From}, nodes, Data) ->
 
 green(info, {nodeup, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, State, nodeup, Node}),
+    {ok, JoinStatus} = join(State),
+    cmkit:log({cmcluster, State, nodeup, Node, JoinStatus}),
     {next_state, State, Data};
 
 green(info, {nodedown, Node}, Data) ->
