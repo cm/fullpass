@@ -16,6 +16,7 @@ all_nodes() ->
     {ok, gen_statem:call(?MODULE, nodes)}.
 
 init([]) ->
+    pg2:create(cmcluster),
     net_kernel:monitor_nodes(true),
     net_adm:world(),
     {ok, red, #data{}}.
@@ -37,7 +38,8 @@ red({call, From}, nodes, Data) ->
 
 yellow(info, {nodeup, Node}, Data) ->
     State = state(),
-    cmkit:log({cmcluster, State, nodeup, Node}),
+    {ok, JoinStatus} = join(State),
+    cmkit:log({cmcluster, State, nodeup, Node, JoinStatus}),
     {next_state, State, Data};
 
 yellow(info, {nodedown, Node}, Data) ->
@@ -62,6 +64,20 @@ green(info, {nodedown, Node}, Data) ->
 green({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
     {keep_state, Data, {reply, From, Nodes}}.
+
+
+join(green) ->
+    LocalMembers = pg2:get_local_members(cmcluster),
+    case lists:is_member(self(), LocalMembers) of
+        true -> 
+            {ok, already_in_cluster};
+        false ->
+            pg2:join(cmcluster, self()),
+            {ok, joined_cluster}
+    end;
+
+join(_) -> 
+    {ok, waiting_to_join_cluster}.
 
 expected_nodes() ->
     Sname = erlang:binary_to_list(cmkit:sname()),
