@@ -98,5 +98,5 @@ info(nodes, _) ->
         sname => cmkit:sname(),
         hostname => cmkit:to_bin(Hostname),
         ips => lists:map(fun cmkit:to_bin/1, Ips),
-        state => state(),
+        health => state(),
         perf => cmperf:stats() }].

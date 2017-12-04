@@ -1,0 +1,1 @@
+erl -name admin@{{ ansible_hostname }}.{{ app_domain }} -setcookie {{ app_name }} -remsh {{ app_name}}@{{ ansible_hostname }}.{{ app_domain }}

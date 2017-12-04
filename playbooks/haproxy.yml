@@ -1,0 +1,31 @@
+- hosts: all
+  tasks:
+    
+    - name: Install HAProxy repo
+      apt_repository:
+        repo: 'ppa:vbernat/haproxy-1.7'
+        state: present 
+
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+    
+    - name: Upload default certs
+      copy:
+        src: "../templates/{{ item }}.pem"
+        dest: "/etc/letsencrypt/combined/{{ item }}.pem"
+      with_items:
+        - admin
+        - fullpass
+        - weekonekt 
+
+    - name: Configure HAProxy
+      template:
+        src: "../templates/haproxy.cfg"
+        dest: "/etc/haproxy/haproxy.cfg"
+    
+    - name: Restart HAProxy
+      service:
+        name: haproxy
+        state: restarted

@@ -1,0 +1,3 @@
+{% for h in groups.all %}
+'{{ h }}.{{ app_domain }}'.  
+{% endfor  %}

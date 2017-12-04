@@ -1,0 +1,48 @@
+- hosts: all
+  vars_files:
+    - ../vars.yml
+  tasks:
+
+    - name: Install base packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - software-properties-common
+        - htop
+    
+    - name: Setup Letsencrypt repo
+      apt_repository:
+        repo: ppa:certbot/certbot
+        state: present
+    
+    - name: Install Letsencrypt client
+      package:
+        name: python-certbot-apache
+        state: present
+
+    - name: Disable Apache
+      service:
+        name: apache2
+        state: stopped
+        enabled: false
+
+    - name: Setup folders for SSL 
+      file:
+        path: "/etc/letsencrypt/{{ item }}"
+        state: directory
+      with_items:
+        - accounts
+        - archive
+        - csr
+        - keys
+        - live
+        - renewal
+        - combined
+    
+    - name: Setup auto-renew cron job
+      cron:
+        name: "Renew Let's Encrypt"
+        minute: 0
+        hour: 5
+        job: "/usr/bin/certbot renew --quiet"

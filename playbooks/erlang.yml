@@ -1,0 +1,20 @@
+- hosts: all
+  tasks:
+
+    - name: Add Erlang Apt Repo
+      apt_repository:
+        repo: deb https://packages.erlang-solutions.com/ubuntu xenial contrib
+        state: present
+
+    - name: Install Erlang 
+      apt:
+        name: esl-erlang=1:19.3
+        state: present
+        allow_unauthenticated: yes
+    
+    - name: Install rebar3
+      get_url:
+        url: "https://s3.amazonaws.com/rebar3/rebar3"
+        dest: "/usr/local/bin"
+        mode: "0555"
+

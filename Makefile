@@ -13,3 +13,25 @@ fullpass:
 push:
 	@git add .; git commit -am 'latest changes'; git push
 
+a: hosts common accounts haproxy erlang app
+
+hosts:
+	@ansible-playbook -i inventories/a playbooks/hosts.yml
+
+common:
+	@ansible-playbook -i inventories/a playbooks/common.yml
+
+ssl:
+	@ansible-playbook -i inventories/a playbooks/ssl.yml
+
+accounts:
+	@ansible-playbook -i inventories/a playbooks/accounts.yml
+
+haproxy:
+	@ansible-playbook -i inventories/a playbooks/haproxy.yml
+
+erlang:
+	@ansible-playbook -i inventories/a playbooks/erlang.yml
+
+app:
+	@ansible-playbook -i inventories/a playbooks/app.yml

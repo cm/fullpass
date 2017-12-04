@@ -1,0 +1,4 @@
+-name {{ app_name }}@{{ ansible_hostname }}.{{ app_domain }} 
+-setcookie {{ app_name }}
++K true
++A30

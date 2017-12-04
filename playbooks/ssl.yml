@@ -1,0 +1,14 @@
+- hosts: all
+  tasks:
+    
+    - name: Generate Certificate for Admin
+      shell: "certbot certonly --webroot --webroot-path /home/{{ app_user }}/app/_build/default/rel/cmrtc/lib/admin-0.1.0/priv -d admin.fullpass.in -n --agree-tos --email pedrogutierrez@mac.com"
+      run_once: yes
+
+    - name: Generate Certificate for Fullpass
+      shell: "certbot certonly --webroot --webroot-path /home/{{ app_user }}/app/_build/default/rel/cmrtc/lib/fullpass-0.1.0/priv -d www.fullpass.in -n --agree-tos --email pedrogutierrez@mac.com"
+      run_once: yes
+    
+    - name: Generate Certificate for Weekonekt
+      shell: "certbot certonly --webroot --webroot-path /home/{{ app_user }}/app/_build/default/rel/cmrtc/lib/weekonekt-0.1.0/priv -d www.weekonekt.com -n --agree-tos --email pedrogutierrez@mac.com"
+      run_once: yes
