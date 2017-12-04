@@ -14,7 +14,9 @@ start_link() ->
 
 all_nodes() -> 
     Members = pg2:get_members(cmcluster),
-    {ok, [ gen_statem:call(M, nodes) || M <- Members ]}.
+    {ok, lists:map(fun(M) ->
+                           gen_statem:call(M, nodes)
+                   end, Members)}.
 
 init([]) ->
     pg2:create(cmcluster),
