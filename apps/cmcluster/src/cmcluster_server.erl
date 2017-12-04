@@ -2,7 +2,7 @@
 -behaviour(gen_statem).
 -export([start_link/0]).
 -export([init/1, callback_mode/0, terminate/3]).
--export([all_nodes/0]).
+-export([expected_nodes/0, all_nodes/0]).
 -export([red/3, yellow/3, green/3]).
 -record(data, {}).
 
@@ -63,10 +63,18 @@ green({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
     {keep_state, Data, {reply, From, Nodes}}.
 
+expected_nodes() ->
+    [ erlang:list_to_atom(
+                        string:join([ "fullpass",
+                                      erlang:atom_to_list(H)
+                                    ], "@")
+                       ) || H <- net_adm:host_file()].
+
+
 state() ->
-    Hosts = net_adm:host_file(),
-    Nodes = cmkit:intersection(Hosts, nodes()),
-    state(length(Nodes), length(Hosts)).
+    ExpectedNodes = expected_nodes(),
+    Nodes = cmkit:intersection(ExpectedNodes, nodes()),
+    state(length(Nodes), length(ExpectedNodes)).
 
 state(Nodes, Hosts) when Nodes >= Hosts ->
     green;
