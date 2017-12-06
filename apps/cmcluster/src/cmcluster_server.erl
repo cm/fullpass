@@ -122,7 +122,7 @@ info(nodes, _) ->
     #{ name => cmkit:to_bin(node()),
         sname => cmkit:sname(),
         hostname => cmkit:to_bin(Hostname),
-        ips => lists:map(fun cmkit:to_bin/1, Ips),
+        ips => cmkit:distinct(lists:map(fun cmkit:to_bin/1, Ips)),
         health => state(),
         perf => cmperf:stats(), 
         db => #{ started => cmdb:started() }}.
