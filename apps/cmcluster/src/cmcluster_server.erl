@@ -124,4 +124,5 @@ info(nodes, _) ->
         hostname => cmkit:to_bin(Hostname),
         ips => lists:map(fun cmkit:to_bin/1, Ips),
         health => state(),
-        perf => cmperf:stats() }.
+        perf => cmperf:stats(), 
+        db => #{ started => cmdb:started() }}.
