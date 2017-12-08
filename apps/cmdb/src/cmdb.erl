@@ -1,6 +1,6 @@
 -module(cmdb).
 -export([behaviour_info/1, all_tables/0]).
--export([started/0]).
+-export([started/0, tables_info/0]).
 -export([start/0, info/0, c/1, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
 -record(triplet, {s, p, o}).
 
@@ -24,6 +24,25 @@ started() ->
 
 info() ->
     mnesia:info().
+
+table_info(T) -> 
+    #{ name => T, 
+       type => mnesia:table_info(T, type),
+       copies => #{ mem => lists:map(fun cmkit:node_host/1, mnesia:table_info(T, ram_copies)),
+                    disc => lists:map(fun cmkit:node_host/1, mnesia:table_info(T, disc_only_copies)),
+                    both =>  lists:map(fun cmkit:node_host/1, mnesia:table_info(T, disc_copies))},
+       size => #{ count => mnesia:table_info(T, size),
+                  words => mnesia:table_info(T, memory) },
+       id => encode_cookie(T) }.
+
+
+tables_info() ->
+    Tables = [ table_info(T) || {T, _, _} <- all_tables() ],
+    [table_info(schema) | Tables].    
+
+encode_cookie(T) ->
+    C = mnesia:table_info(T, cookie),
+    base64:encode(erlang:binary_to_list(erlang:md5(erlang:term_to_binary(C)))).
 
 clear() ->
     [clear(Tab) || Tab <- all_tables()].
