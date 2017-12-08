@@ -123,7 +123,7 @@ info(nodes, _) ->
         info => #{ hostname => cmkit:to_bin(Hostname),
                    ips => cmkit:distinct(lists:map(fun cmkit:to_bin/1, Ips)) },
         cluster => #{ health => state(),
-                      peers => lists:map(fun cmkit:node_host/1, nodes()) },
+                      peers => lists:map(fun cmkit:node_host_short/1, nodes()) },
         db => #{ started => cmdb:started(),
                  tables => cmdb:tables_info()
                }
