@@ -28,9 +28,9 @@ info() ->
 table_info(T) -> 
     #{ name => T, 
        type => mnesia:table_info(T, type),
-       copies => #{ mem => lists:map(fun cmkit:node_host/1, mnesia:table_info(T, ram_copies)),
-                    disc => lists:map(fun cmkit:node_host/1, mnesia:table_info(T, disc_only_copies)),
-                    both =>  lists:map(fun cmkit:node_host/1, mnesia:table_info(T, disc_copies))},
+       copies => #{ mem => lists:map(fun cmkit:node_host_short/1, mnesia:table_info(T, ram_copies)),
+                    disc => lists:map(fun cmkit:node_host_short/1, mnesia:table_info(T, disc_only_copies)),
+                    both =>  lists:map(fun cmkit:node_host_short/1, mnesia:table_info(T, disc_copies))},
        size => #{ count => mnesia:table_info(T, size),
                   words => mnesia:table_info(T, memory) },
        id => encode_cookie(T) }.
