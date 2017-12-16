@@ -1,3 +1,5 @@
+.PHONY: ui
+
 console:
 	@rebar3 as $(p) release; _build/$(p)/rel/cmrtc/bin/cmrtc console
 
@@ -35,3 +37,9 @@ erlang:
 
 app:
 	@ansible-playbook -i inventories/a playbooks/app.yml
+
+admin:
+	@cd ui/admin; yarn start
+ui:
+	@cd ui/admin; yarn build; cp dist/app.js ../../apps/admin/priv; cd ../..
+	@ansible-playbook -i inventories/a playbooks/ui.yml 

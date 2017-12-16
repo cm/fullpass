@@ -1,0 +1,12 @@
+- hosts: all
+  vars_files:
+    - ../vars.yml
+  tasks:
+    
+    - name: Copy app.js
+      copy: 
+        src: "../apps/{{ item }}/priv/app.js"
+        dest: "/home/{{ app_user }}/app/apps/{{ item }}/priv/app.js"
+        owner: "{{ app_user }}"
+      with_items:
+        - admin
