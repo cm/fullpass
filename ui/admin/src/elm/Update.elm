@@ -49,13 +49,25 @@ update msg model =
                     { model | perspective = p, node = Nothing } ! []
 
                 _ ->
-                    { model | perspective = p } ! []
+                    { model | perspective = p, table = Nothing } ! []
 
         ShowNode n ->
             { model | node = Just n } ! []
 
         ShowTable t ->
             { model | table = Just t } ! []
+
+        ShowNodeTable view t ->
+            let
+                node2 =
+                    { view | table = Just t }
+            in
+            { model
+                | node = Just node2
+                , hostname = Nothing
+                , media = Nothing
+            }
+                ! []
 
         OnLoginEmail v ->
             { model | loginData = loginDataWithEmail model.loginData v } ! []
@@ -98,12 +110,53 @@ update msg model =
             }
                 ! []
 
-        ShowNodeTab v t ->
+        DeleteTableReplica v t ->
             let
                 v2 =
-                    { v | tab = t }
+                    { v | state = DeletingReplica }
             in
-            modelWithNodeView model v2 ! []
+            { model | node = Just v2 }
+                ! [ deleteTableReplica model.flags model.session v.node.info.hostname t.name ]
+
+        AddTableReplica v t ->
+            case model.hostname of
+                Nothing ->
+                    { contents = "Please select a hostname"
+                    , severity = SevError
+                    }
+                        |> error model
+
+                Just h ->
+                    case t.name of
+                        "schema" ->
+                            let
+                                v2 =
+                                    { v | state = AddingReplica }
+                            in
+                            { model | node = Just v2 }
+                                ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h "both" ]
+
+                        _ ->
+                            case model.media of
+                                Nothing ->
+                                    { contents = "Please select a media"
+                                    , severity = SevError
+                                    }
+                                        |> error model
+
+                                Just m ->
+                                    let
+                                        v2 =
+                                            { v | state = AddingReplica }
+                                    in
+                                    { model | node = Just v2 }
+                                        ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h m ]
+
+        HostnameSelected h ->
+            { model | hostname = Just h } ! []
+
+        MediaSelected m ->
+            { model | media = Just m } ! []
 
 
 testLogin : Model -> Cmd Msg

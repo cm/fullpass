@@ -21,6 +21,8 @@ newModel flags =
     , perspective = Servers
     , node = Nothing
     , table = Nothing
+    , hostname = Nothing
+    , media = Nothing
     }
 
 
@@ -88,7 +90,8 @@ init flags =
 nodeView : NodeData -> NodeView
 nodeView node =
     { node = node
-    , tab = Connections
+    , table = Nothing
+    , state = Idle
     }
 
 
@@ -247,6 +250,11 @@ tables model =
     model.tables
         |> Dict.values
         |> List.sortWith tableByName
+
+
+tableForName : Model -> String -> Maybe TableView
+tableForName model name =
+    Dict.get name model.tables
 
 
 replicas : TableView -> List Int

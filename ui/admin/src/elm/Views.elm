@@ -64,10 +64,20 @@ homePage model =
         main =
             case model.perspective of
                 Servers ->
-                    nodesPane model
+                    case model.node of
+                        Nothing ->
+                            nodesPane model
+
+                        Just n ->
+                            nodePane model n
 
                 Database ->
-                    tablesPane model
+                    case model.table of
+                        Nothing ->
+                            tablesPane model
+
+                        Just t ->
+                            tablePane t
     in
     sidebarLayout model s n main
 
@@ -177,11 +187,11 @@ nodesPane model =
         ]
 
 
-statusCircle : String -> Html Msg
-statusCircle color =
+statusCircle : String -> String -> Html Msg
+statusCircle size color =
     div
         [ class ("circle bg-" ++ color)
-        , style [ ( "width", "28px" ), ( "height", "28px" ) ]
+        , style [ ( "width", size ), ( "height", size ) ]
         ]
         []
 
@@ -203,7 +213,7 @@ nodeRow : NodeView -> Html Msg
 nodeRow view =
     tr []
         [ td [ style [ ( "width", "40px" ) ] ]
-            [ view.node |> nodeStatusColor |> statusCircle ]
+            [ view.node |> nodeStatusColor |> statusCircle "28px" ]
         , td []
             [ button [ class "btn btn-link", onClick (ShowNode view) ]
                 [ text view.node.info.hostname
@@ -259,13 +269,14 @@ tableRow : TableView -> Html Msg
 tableRow view =
     tr []
         [ td [ style [ ( "width", "40px" ) ] ]
-            [ view |> tableStatusColor |> statusCircle
+            [ view |> tableStatusColor |> statusCircle "28px"
             ]
         , td []
             [ button [ class "btn btn-link", onClick (ShowTable view) ]
                 [ text view.table.name
                 ]
-            , tableGroups view
+
+            --    , tableGroups view
             ]
         ]
 
@@ -284,64 +295,264 @@ tableGroup group =
         [ group.all |> String.join " " |> text ]
 
 
-nodePane : NodeView -> Html Msg
-nodePane view =
+ips : NodeData -> List (Html Msg)
+ips node =
+    List.map
+        (\i ->
+            label [ class "mx-2 label label-rounded", style [ ( "font-size", "14px" ) ] ]
+                [ text i ]
+        )
+        node.info.ips
+
+
+nodePane : Model -> NodeView -> Html Msg
+nodePane model view =
     let
         node =
             view.node
     in
-    div [ class "panel col-12 col-sm-12 col-md-12" ]
-        [ div [ class "panel-header text-center" ]
-            [ div [ class "panel-title m-10" ]
-                [ text node.info.hostname ]
-            , div [ class "panel-subtitle" ]
-                [ small []
-                    [ node.info.ips |> String.join " " |> text
-                    ]
-                , br [] []
-                , node |> healthSummary
+    div [ class "mt-2 container columns" ]
+        [ div [ class "col-4" ]
+            [ h4 []
+                (text node.info.hostname
+                    :: ips node
+                )
+            , node |> nodeResources
+            , node |> nodePeers
+            , view |> nodeTables model
+            ]
+        , div [ class "mx-2 col-4" ]
+            [ case view.table of
+                Nothing ->
+                    div [ class "text-gray" ]
+                        [ text "No table selected" ]
+
+                Just t ->
+                    nodeTablePane1 model view t
+            ]
+        ]
+
+
+tableProps : TableData -> List (Html Msg)
+tableProps table =
+    [ label
+        [ class "mx-2 label label-rounded"
+        , style [ ( "font-size", "14px" ) ]
+        ]
+        [ table.kind |> text ]
+    , label
+        [ class "label label-rounded"
+        , style [ ( "font-size", "14px" ) ]
+        ]
+        [ (toString table.size.count ++ " entries") |> text ]
+    ]
+
+
+tableReplicas : TableData -> Html Msg
+tableReplicas table =
+    div []
+        [ h6 [] [ text "Replicas" ]
+        , tableMedia "Memory" table.copies.mem
+        , tableMedia "Disc" table.copies.disc
+        , tableMedia "Memory and disc" table.copies.both
+        ]
+
+
+tableMedia : String -> List String -> Html Msg
+tableMedia title hostnames =
+    case hostnames of
+        [] ->
+            div [] []
+
+        _ ->
+            div [ class "container columns" ]
+                [ div []
+                    [ text title ]
+                , div []
+                    (List.map
+                        (\name ->
+                            label [ class "label label-rounded mx-2" ]
+                                [ text name ]
+                        )
+                        hostnames
+                    )
                 ]
-            ]
-        , div [ class "panel-body" ]
-            [ node |> cpuUsage
-            , node |> memAvailable
-            , view |> nodeTabs
-            , view |> nodeContents
 
-            --, node |> dbSummary
-            --, node |> dbInfo
-            --high low max min opt v
+
+nodeTablePane1 : Model -> NodeView -> TableData -> Html Msg
+nodeTablePane1 model view table =
+    div []
+        [ h4 []
+            (text table.name
+                :: tableProps table
+            )
+        , tableReplicas table
+        , tableReplica model view table
+        ]
+
+
+onChange : (String -> msg) -> Html.Attribute msg
+onChange tagger =
+    on "change" (Json.map tagger Html.Events.targetValue)
+
+
+tableReplica : Model -> NodeView -> TableData -> Html Msg
+tableReplica model view table =
+    case view.state of
+        Idle ->
+            div [ class "mt-2" ]
+                [ tableAddReplicaPane model view table
+                , tableDeletePane view table
+                ]
+
+        AddingReplica ->
+            div [ class "mt-2" ]
+                [ div [ class "d-inline-flex" ]
+                    [ text "Adding replica..." ]
+                , div [ class "mx-2 d-inline-flex loading" ] []
+                ]
+
+        DeletingReplica ->
+            div [ class "mt-2" ]
+                [ div [ class "d-inline-flex" ]
+                    [ text "Deleting replica..."
+                    ]
+                , div [ class "mx-2 d-inline-flex loading" ] []
+                ]
+
+
+tableAddReplicaPane : Model -> NodeView -> TableData -> Html Msg
+tableAddReplicaPane model view table =
+    let
+        peerSelection =
+            case view.node.cluster.peers of
+                [] ->
+                    div [] []
+
+                _ ->
+                    select [ class "form-select", onChange HostnameSelected ]
+                        (List.map
+                            (\name ->
+                                option [] [ text name ]
+                            )
+                            view.node.cluster.peers
+                        )
+
+        mediaSelection =
+            case table.name of
+                "schema" ->
+                    div [ class "mt-2" ]
+                        [ text "Media: "
+                        , span [ class "text-bold" ] [ text "Memory and disc" ]
+                        ]
+
+                _ ->
+                    select [ class "mt-2 form-select", onChange MediaSelected ]
+                        (List.map
+                            (\name ->
+                                option [] [ text name ]
+                            )
+                            [ "Disc", "Memory", "Memory and disc" ]
+                        )
+
+        buttonStyle =
+            case table.name of
+                "schema" ->
+                    case model.hostname of
+                        Nothing ->
+                            "disabled"
+
+                        Just _ ->
+                            ""
+
+                _ ->
+                    case ( model.hostname, model.media ) of
+                        ( Just _, Just _ ) ->
+                            ""
+
+                        ( _, _ ) ->
+                            "disabled"
+    in
+    case view.node.cluster.peers of
+        [] ->
+            div [] []
+
+        _ ->
+            div []
+                [ peerSelection
+                , mediaSelection
+                , button
+                    [ class ("mt-2 btn btn-primary " ++ buttonStyle)
+                    , style [ ( "width", "100%" ) ]
+                    , onClick (AddTableReplica view table)
+                    ]
+                    [ text "Add replica" ]
+                ]
+
+
+tableDeletePane : NodeView -> TableData -> Html Msg
+tableDeletePane view table =
+    let
+        title =
+            case table.name of
+                "schema" ->
+                    "Delete entire schema"
+
+                _ ->
+                    "Delete this replica"
+    in
+    div []
+        [ button
+            [ class "btn btn-error"
+            , style [ ( "width", "100%" ) ]
+            , onClick (DeleteTableReplica view table)
             ]
-        , div [ class "panel-footer" ]
-            [--button [ class "btn btn-block btn-primary" ] [ text "Open" ]
+            [ text title ]
+        ]
+
+
+nodeResources : NodeData -> Html Msg
+nodeResources node =
+    div []
+        [ h6 [] [ text "Resources" ]
+        , node |> cpuUsage
+        , node |> memAvailable
+        ]
+
+
+nodePeers : NodeData -> Html Msg
+nodePeers node =
+    let
+        peers =
+            case node.cluster.peers of
+                [] ->
+                    [ text "This server has no connections" ]
+
+                names ->
+                    List.map
+                        (\name ->
+                            label [ class "label label-rounded mx-2" ]
+                                [ text name ]
+                        )
+                        names
+    in
+    div [ class "mt-2" ]
+        [ h6 [] [ text "Connections" ]
+        , div []
+            [ div [ class "d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
+                [ node |> nodeStatusColor |> statusCircle "16px" ]
+            , div [ class "d-inline-flex mx-2", style [ ( "vertical-align", "middle" ) ] ]
+                peers
             ]
         ]
 
 
-nodeTabs : NodeView -> Html Msg
-nodeTabs view =
-    ul [ class "tab tab-block" ]
-        [ li [ class ("tab-item " ++ activeCss (view.tab == Connections)) ]
-            [ a [ href "#", onClick (ShowNodeTab view Connections) ]
-                [ text "Peers" ]
-            ]
-        , li [ class ("tab-item " ++ activeCss (view.tab == Tables)) ]
-            [ a [ href "#", onClick (ShowNodeTab view Tables) ]
-                [ text "Tables" ]
-            ]
-        ]
-
-
-nodeContents : NodeView -> Html Msg
-nodeContents view =
-    case view.tab of
-        Connections ->
-            div []
-                (view.node |> peers)
-
-        Tables ->
-            div []
-                (view.node |> dbTables)
+nodeTables : Model -> NodeView -> Html Msg
+nodeTables model view =
+    div [ class "mt-2" ]
+        (h6 [] [ text "Database" ]
+            :: (view |> dbTables model)
+        )
 
 
 healthSummary : NodeData -> Html Msg
@@ -364,41 +575,49 @@ healthSummary node =
     span [ class ("mt-2 label label-" ++ labelStyle) ] [ node.cluster.health |> String.toUpper |> text ]
 
 
-dbInfo : NodeData -> Html Msg
-dbInfo node =
-    div [ class "accordion mt-2" ]
-        [ input [ attribute "d" "", attribute "hidden" "", id "accordion-1", name "accordion-checkbox", type_ "checkbox" ]
-            []
-        , label [ class "c-hand", for "accordion-1" ]
-            [ node |> dbSummary
-            ]
-        , div [ class "accordion-body" ]
-            [ div []
-                (node |> dbTables)
+tablePane : TableView -> Html Msg
+tablePane view =
+    div [] []
+
+
+dbTables : Model -> NodeView -> List (Html Msg)
+dbTables model view =
+    List.map (dbTable model view) view.node.db.tables
+
+
+dbTable : Model -> NodeView -> TableData -> Html Msg
+dbTable model view table =
+    let
+        tableView =
+            table.name |> tableForName model
+
+        tableColor =
+            case tableView of
+                Nothing ->
+                    "gray"
+
+                Just tv ->
+                    tv |> tableStatusColor
+    in
+    div []
+        [ div [ class "d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
+            [ tableColor |> statusCircle "16px" ]
+        , div [ class "d-inline-flex mx-2", style [ ( "vertical-align", "middle" ) ] ]
+            [ case view.table of
+                Just t ->
+                    case t.name == table.name of
+                        True ->
+                            text table.name
+
+                        False ->
+                            a [ href "#", onClick (ShowNodeTable view table) ]
+                                [ text table.name ]
+
+                _ ->
+                    a [ href "#", onClick (ShowNodeTable view table) ]
+                        [ text table.name ]
             ]
         ]
-
-
-dbTables : NodeData -> List (Html Msg)
-dbTables node =
-    List.map dbTable node.db.tables
-
-
-dbTable : TableData -> Html Msg
-dbTable table =
-    div []
-        [ text table.name ]
-
-
-peers : NodeData -> List (Html Msg)
-peers node =
-    List.map peer node.cluster.peers
-
-
-peer : String -> Html Msg
-peer name =
-    div []
-        [ text name ]
 
 
 

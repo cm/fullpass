@@ -20,6 +20,7 @@ type Msg
     | ShowPerspective Perspective
     | ShowNode NodeView
     | ShowTable TableView
+    | ShowNodeTable NodeView TableData
     | OnLoginEmail String
     | OnLoginPassword String
     | LoginErr UserMsg
@@ -28,4 +29,7 @@ type Msg
     | LogoutOk
     | LogoutErr UserMsg
     | Nodes (List NodeData)
-    | ShowNodeTab NodeView NodeTab
+    | DeleteTableReplica NodeView TableData
+    | AddTableReplica NodeView TableData
+    | HostnameSelected String
+    | MediaSelected String

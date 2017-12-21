@@ -45,3 +45,29 @@ encodeNodes session =
             , ( "session", Encode.string session )
             ]
         )
+
+
+encodeDeleteTableReplica : String -> String -> String -> String
+encodeDeleteTableReplica session hostname tablename =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "cluster_delete_table" )
+            , ( "session", Encode.string session )
+            , ( "host", Encode.string hostname )
+            , ( "table", Encode.string tablename )
+            ]
+        )
+
+
+encodeAddReplica : String -> String -> String -> String -> String -> String
+encodeAddReplica session hostname tablename peer media =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "cluster_add_table" )
+            , ( "session", Encode.string session )
+            , ( "host", Encode.string hostname )
+            , ( "table", Encode.string tablename )
+            , ( "peer", Encode.string peer )
+            , ( "media", Encode.string media )
+            ]
+        )

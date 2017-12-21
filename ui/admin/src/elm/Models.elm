@@ -50,8 +50,15 @@ type NodeTab
 
 type alias NodeView =
     { node : NodeData
-    , tab : NodeTab
+    , table : Maybe TableData
+    , state : NodeState
     }
+
+
+type NodeState
+    = Idle
+    | DeletingReplica
+    | AddingReplica
 
 
 type alias NodeData =
@@ -148,4 +155,6 @@ type alias Model =
     , perspective : Perspective
     , node : Maybe NodeView
     , table : Maybe TableView
+    , hostname : Maybe String
+    , media : Maybe String
     }
