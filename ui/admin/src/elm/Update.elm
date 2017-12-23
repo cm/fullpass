@@ -43,19 +43,29 @@ update msg model =
             in
             m2 ! [ testLogin m2 ]
 
-        ShowPerspective p ->
-            case p of
-                Servers ->
-                    { model | perspective = p, node = Nothing } ! []
+        ShowNodes ->
+            { model | state = Nodes } ! []
 
-                _ ->
-                    { model | perspective = p, table = Nothing } ! []
+        ShowTables ->
+            { model | state = Tables } ! []
 
         ShowNode n ->
             { model | node = Just n } ! []
 
         ShowTable t ->
             { model | table = Just t } ! []
+
+        ShowNewTable ->
+            case model.newTableData of
+                Nothing ->
+                    { model | state = NewTable, newTableData = Just newTableData } ! []
+
+                Just t ->
+                    let
+                        t2 =
+                            { t | name = "" }
+                    in
+                    { model | state = NewTable, newTableData = Just t2 } ! []
 
         ShowNodeTable view t ->
             let
@@ -80,7 +90,7 @@ update msg model =
 
         LoginOk u ->
             { model
-                | state = SignedIn
+                | state = Nodes
                 , loginData = newLoginData
                 , user = Just u
             }
@@ -103,7 +113,7 @@ update msg model =
         LogoutErr e ->
             e |> error model
 
-        Nodes nodes ->
+        NodeList nodes ->
             { model
                 | nodes = indexedNodes model nodes
                 , tables = indexedTables model nodes
@@ -157,6 +167,95 @@ update msg model =
 
         MediaSelected m ->
             { model | media = Just m } ! []
+
+        NewTableNameChanged v ->
+            case model.newTableData of
+                Nothing ->
+                    { contents = "No model to hold new table data. This is a bug. Please fix"
+                    , severity = SevError
+                    }
+                        |> error model
+
+                Just d ->
+                    modelWithNewTableName model d v ! []
+
+        NewTableStorageChanged v ->
+            case model.newTableData of
+                Nothing ->
+                    { contents = "No model to hold new table data. This is a bug. Please fix"
+                    , severity = SevError
+                    }
+                        |> error model
+
+                Just d ->
+                    case v |> toTableStorage of
+                        Nothing ->
+                            { contents = "Invalid table storage"
+                            , severity = SevWarn
+                            }
+                                |> error model
+
+                        Just s ->
+                            modelWithNewTableStorage model d s ! []
+
+        RemoveNewTableReplica r ->
+            case model.newTableData of
+                Nothing ->
+                    { contents = "No model to hold new table data. This is a bug. Please fix"
+                    , severity = SevError
+                    }
+                        |> error model
+
+                Just d ->
+                    modelWithoutNewTableReplica model d r ! []
+
+        NewTableReplicaNodeChanged v ->
+            { model | nodeSelection = Just v } ! []
+
+        NewTableReplicaMediaChanged v ->
+            case v |> stringToTableMedia of
+                Nothing ->
+                    { contents = "Invalid type of media"
+                    , severity = SevWarn
+                    }
+                        |> error model
+
+                Just m ->
+                    { model | tableMediaSelection = Just m } ! []
+
+        AddNewTableReplica ->
+            case model |> nodeSelection of
+                Nothing ->
+                    { contents = "Please select a node for the replica"
+                    , severity = SevWarn
+                    }
+                        |> error model
+
+                Just v ->
+                    withNewTableData model
+                        (\t ->
+                            modelWithNewTableReplica model t v ! []
+                        )
+
+        CreateTable ->
+            withNewTableData model
+                (\t ->
+                    { model | state = CreatingTable }
+                        ! [ createTable model.flags model.session t ]
+                )
+
+
+withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+withNewTableData model next =
+    case model.newTableData of
+        Nothing ->
+            { contents = "Missing 'newTableData' in model. This is a bug. Please fix."
+            , severity = SevWarn
+            }
+                |> error model
+
+        Just d ->
+            next d
 
 
 testLogin : Model -> Cmd Msg

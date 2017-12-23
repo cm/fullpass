@@ -1,7 +1,7 @@
 -module(cmdb).
 -export([behaviour_info/1, all_tables/0]).
 -export([started/0, tables_info/0]).
--export([start/0, info/0, c/1, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
+-export([start/0, info/0, c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
 -record(triplet, {s, p, o}).
 
 behaviour_info(callbacks) ->
@@ -72,6 +72,33 @@ c({Tab, Type, Storage}) ->
         true ->
             exists
     end.
+
+c(Tab, Type, Storage) ->
+    Info = [{attributes, record_info(fields, triplet)},
+                                 {record_name, triplet},
+                                 {type, Type}],
+    Info2 = add_copies_info(Info, Storage),
+    case exists(Tab) of
+        false -> 
+            mnesia:create_table(Tab, Info2);
+        true ->
+            exists
+    end.
+
+
+add_copies_info(Info, []) -> 
+    Info;
+
+add_copies_info(Info, [{disc, Nodes}|Rem]) ->
+    add_copies_info([{disc_only_copies, Nodes}|Info], Rem);
+
+add_copies_info(Info, [{mem, Nodes}|Rem]) ->
+    add_copies_info([{ram_copies, Nodes}|Info], Rem);
+
+add_copies_info(Info, [{both, Nodes}|Rem]) ->
+    add_copies_info([{disc_copies, Nodes}|Info], Rem).
+
+
 
 exists(TableName) ->
    Tables = mnesia:system_info(tables),

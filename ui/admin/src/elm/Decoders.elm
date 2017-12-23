@@ -103,8 +103,8 @@ actionOkDecoder action =
         "ping" ->
             Decode.succeed WsPong
 
-        "cluster_nodes" ->
-            Decode.map Nodes
+        "nodes" ->
+            Decode.map NodeList
                 (field "data" nodesDecoder)
 
         _ ->

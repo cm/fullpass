@@ -19,8 +19,84 @@ view model =
         SignedOut ->
             loginPage model
 
-        SignedIn ->
-            homePage model
+        Nodes ->
+            nodesPage model
+
+        Node ->
+            case model.node of
+                Nothing ->
+                    "No node to show" |> errorPage model
+
+                Just n ->
+                    nodePage model n
+
+        NodeTable ->
+            case model.node of
+                Nothing ->
+                    "No node to show" |> errorPage model
+
+                Just v ->
+                    case v.table of
+                        Nothing ->
+                            "No table to show" |> errorPage model
+
+                        Just t ->
+                            nodePage model v
+
+        Tables ->
+            tablesPage model
+
+        Table ->
+            case model.table of
+                Nothing ->
+                    "No page to show" |> errorPage model
+
+                Just t ->
+                    tablePage model t
+
+        NewTable ->
+            newTablePage model
+
+        CreatingTable ->
+            "Creating page ... "
+                |> waitingPage model
+
+
+errorPage : Model -> String -> Html Msg
+errorPage model msg =
+    div [] [ text msg ]
+        |> sidebarLayout2 model
+
+
+sidebarLayout2 : Model -> Html Msg -> Html Msg
+sidebarLayout2 model main =
+    let
+        s =
+            sidebar model
+
+        n =
+            nav model
+    in
+    sidebarLayout model s n main
+
+
+sidebarLayout : Model -> Html Msg -> Html Msg -> Html Msg -> Html Msg
+sidebarLayout model sidebar nav main =
+    div [ class "off-canvas" ]
+        [ a [ class "off-canvas-toggle btn btn-primary btn-action", href "#sidebar-id" ]
+            [ i [ class "icon icon-menu" ]
+                []
+            ]
+        , div [ class "off-canvas-sidebar p-2", id "sidebar-id" ]
+            [ sidebar ]
+        , a [ class "off-canvas-overlay", href "#close" ]
+            []
+        , div [ class "off-canvas-content p-2" ]
+            [ nav
+            , userMsgPane model
+            , main
+            ]
+        ]
 
 
 loginPage : Model -> Html Msg
@@ -52,36 +128,6 @@ loginPage model =
         |> simpleLayout model
 
 
-homePage : Model -> Html Msg
-homePage model =
-    let
-        s =
-            sidebar model
-
-        n =
-            nav model
-
-        main =
-            case model.perspective of
-                Servers ->
-                    case model.node of
-                        Nothing ->
-                            nodesPane model
-
-                        Just n ->
-                            nodePane model n
-
-                Database ->
-                    case model.table of
-                        Nothing ->
-                            tablesPane model
-
-                        Just t ->
-                            tablePane t
-    in
-    sidebarLayout model s n main
-
-
 nav : Model -> Html Msg
 nav model =
     header [ class "navbar" ]
@@ -95,18 +141,53 @@ nav model =
         ]
 
 
+isNodeState : Model -> Bool
+isNodeState model =
+    case model.state of
+        Nodes ->
+            True
+
+        Node ->
+            True
+
+        NodeTable ->
+            True
+
+        _ ->
+            False
+
+
+isTablesState : Model -> Bool
+isTablesState model =
+    case model.state of
+        Tables ->
+            True
+
+        Table ->
+            True
+
+        NewTable ->
+            True
+
+        _ ->
+            False
+
+
 sidebar : Model -> Html Msg
 sidebar model =
     ul [ class "nav" ]
-        [ navItem "Servers" "icon-drive" (model.perspective == Servers) (ShowPerspective Servers)
-        , navItem "Database" "icon-database" (model.perspective == Database) (ShowPerspective Database)
+        [ navItem "Nodes" "icon-drive" (model |> isNodeState) ShowNodes
+        , navItem "Tables" "icon-database" (model |> isTablesState) ShowTables
         ]
 
 
 breadcrumb : Model -> Html Msg
 breadcrumb model =
-    case model.perspective of
-        Servers ->
+    case model.state of
+        Nodes ->
+            nodesBreadcrumb
+
+        Node ->
             case model.node of
                 Nothing ->
                     nodesBreadcrumb
@@ -114,7 +195,18 @@ breadcrumb model =
                 Just v ->
                     nodeBreadcrumb v
 
-        Database ->
+        NodeTable ->
+            case model.node of
+                Nothing ->
+                    nodesBreadcrumb
+
+                Just v ->
+                    nodeTableBreadcrumb v
+
+        Tables ->
+            tablesBreadcrumb
+
+        Table ->
             case model.table of
                 Nothing ->
                     tablesBreadcrumb
@@ -122,12 +214,18 @@ breadcrumb model =
                 Just t ->
                     tableBreadcrumb t
 
+        NewTable ->
+            newTableBreadcrumb
+
+        _ ->
+            div [] []
+
 
 nodesBreadcrumb : Html Msg
 nodesBreadcrumb =
     ul [ class "breadcrumb" ]
         [ li [ class "breadcrumb-item" ]
-            [ text "Servers"
+            [ text "Nodes"
             ]
         ]
 
@@ -136,8 +234,8 @@ nodeBreadcrumb : NodeView -> Html Msg
 nodeBreadcrumb view =
     ul [ class "breadcrumb" ]
         [ li [ class "breadcrumb-item" ]
-            [ a [ href "#", onClick (ShowPerspective Servers) ]
-                [ text "Servers"
+            [ a [ href "#", onClick ShowNodes ]
+                [ text "Nodes"
                 ]
             ]
         , li [ class "breadcrumb-item" ]
@@ -146,11 +244,38 @@ nodeBreadcrumb view =
         ]
 
 
+nodeTableBreadcrumb : NodeView -> Html Msg
+nodeTableBreadcrumb view =
+    let
+        tableName =
+            case view.table of
+                Nothing ->
+                    "Unknown table"
+
+                Just t ->
+                    t.name
+    in
+    ul [ class "breadcrumb" ]
+        [ li [ class "breadcrumb-item" ]
+            [ a [ href "#", onClick ShowNodes ]
+                [ text "Nodes"
+                ]
+            ]
+        , li [ class "breadcrumb-item" ]
+            [ a [ href "#", onClick (ShowNode view) ]
+                [ text view.node.info.hostname ]
+            ]
+        , li [ class "breadcrumb-item" ]
+            [ text tableName
+            ]
+        ]
+
+
 tablesBreadcrumb : Html Msg
 tablesBreadcrumb =
     ul [ class "breadcrumb" ]
         [ li [ class "breadcrumb-item" ]
-            [ text "Database"
+            [ text "Tables"
             ]
         ]
 
@@ -159,8 +284,8 @@ tableBreadcrumb : TableView -> Html Msg
 tableBreadcrumb view =
     ul [ class "breadcrumb" ]
         [ li [ class "breadcrumb-item" ]
-            [ a [ href "#", onClick (ShowPerspective Database) ]
-                [ text "Database" ]
+            [ a [ href "#", onClick ShowTables ]
+                [ text "Tables" ]
             ]
         , li [ class "breadcrumb-item" ]
             [ text view.table.name
@@ -168,8 +293,21 @@ tableBreadcrumb view =
         ]
 
 
-nodesPane : Model -> Html Msg
-nodesPane model =
+newTableBreadcrumb : Html Msg
+newTableBreadcrumb =
+    ul [ class "breadcrumb" ]
+        [ li [ class "breadcrumb-item" ]
+            [ a [ href "#", onClick ShowTables ]
+                [ text "Tables" ]
+            ]
+        , li [ class "breadcrumb-item" ]
+            [ text "Add new ..."
+            ]
+        ]
+
+
+nodesPage : Model -> Html Msg
+nodesPage model =
     div [ class "" ]
         [ table [ class "table table-striped table-hover" ]
             [ thead []
@@ -185,6 +323,7 @@ nodesPane model =
                 )
             ]
         ]
+        |> sidebarLayout2 model
 
 
 statusCircle : String -> String -> Html Msg
@@ -222,10 +361,117 @@ nodeRow view =
         ]
 
 
-tablesPane : Model -> Html Msg
-tablesPane model =
-    div [ class "" ]
-        [ table [ class "table table-striped table-hover" ]
+waitingPage : Model -> String -> Html Msg
+waitingPage model msg =
+    div []
+        [ msg |> text ]
+        |> sidebarLayout2 model
+
+
+newTablePage : Model -> Html Msg
+newTablePage model =
+    case model.newTableData of
+        Nothing ->
+            "No new table data was initialized. This is a bug, please fix"
+                |> errorPage model
+
+        Just data ->
+            div [ class "" ]
+                [ div [ class "" ]
+                    [ div [ class "form-group" ]
+                        [ h4 [] [ text "Add table" ] ]
+                    ]
+                , div [ class "columns" ]
+                    [ div [ class "column col-6" ]
+                        [ div [ class "form-group" ]
+                            [ fLabel "Table name"
+                            , fText "Table name" data.name NewTableNameChanged
+                            ]
+                        , div [ class "form-group" ]
+                            [ fLabel "Type"
+                            , tableStorageSelect data.storage NewTableStorageChanged
+                            ]
+                        ]
+                    ]
+                , div [ class "mt-2 columns " ]
+                    [ div [ class "column col-6" ]
+                        [ div [ class "form-group" ]
+                            [ fLabel "Replicas"
+                            ]
+                        , div [ class "form-group" ]
+                            [ nodesSelect model NewTableReplicaNodeChanged
+                            ]
+                        , div [ class "form-group" ]
+                            [ tableMediaSelect model NewTableReplicaMediaChanged
+                            ]
+                        , div [ class "form-group" ]
+                            [ dButton "Add replica" AddNewTableReplica ]
+                        , div [ class "form-group py-2" ]
+                            [ newTableDataReplicasPane data
+                            ]
+                        ]
+                    ]
+                , div [ class "columns mt-2" ]
+                    [ div [ class "column col-2" ]
+                        [ case model |> canCreateTable of
+                            True ->
+                                pButton "Create table" CreateTable
+
+                            False ->
+                                disabledPButton "Create table"
+                        ]
+                    ]
+                ]
+                |> sidebarLayout2 model
+
+
+newTableDataReplicasPane : NewTableData -> Html Msg
+newTableDataReplicasPane data =
+    let
+        replicas =
+            newTableReplicas data
+    in
+    case replicas |> List.length of
+        0 ->
+            div [ class "text-secondary", style [ ( "vertical-align", "middle" ) ] ]
+                [ div [ class "d-inline-block" ]
+                    [ data |> newTableStatusColor |> statusCircle "16px" ]
+                , div [ class "d-inline-block mx-2 " ]
+                    [ "No replicas defined yet" |> text ]
+                ]
+
+        _ ->
+            table [ class "table table-striped table-hover" ]
+                [ thead []
+                    [ th []
+                        [ data |> newTableStatusColor |> statusCircle "16px"
+                        ]
+                    , th [] []
+                    , th [] []
+                    ]
+                , tbody []
+                    (List.map newTableDataReplica replicas)
+                ]
+
+
+newTableDataReplica : TableReplicaData -> Html Msg
+newTableDataReplica data =
+    tr []
+        [ td [ class "col-3" ]
+            [ text data.node ]
+        , td [ class "col-6" ]
+            [ data.media |> tableMediaToString |> text ]
+        , td [ class "text-right col-3" ]
+            [ dButton "Remove" (RemoveNewTableReplica data) ]
+        ]
+
+
+tablesPage : Model -> Html Msg
+tablesPage model =
+    div []
+        [ div []
+            [ pButton "Add new..." ShowNewTable ]
+        , table [ class "mt-2 table table-striped table-hover" ]
             [ thead []
                 [ tr []
                     [ th [ style [ ( "width", "40px" ) ] ] []
@@ -239,6 +485,15 @@ tablesPane model =
                 )
             ]
         ]
+        |> sidebarLayout2 model
+
+
+tablePage : Model -> TableView -> Html Msg
+tablePage model t =
+    div []
+        [ t.table.name |> text
+        ]
+        |> sidebarLayout2 model
 
 
 tableStatusColor : TableView -> String
@@ -263,6 +518,23 @@ tableStatusColor v =
 
         _ ->
             "error"
+
+
+newTableStatusColor : NewTableData -> String
+newTableStatusColor data =
+    let
+        replicas =
+            newTableReplicas data
+    in
+    case replicas |> List.length of
+        0 ->
+            "error"
+
+        1 ->
+            "warning"
+
+        _ ->
+            "success"
 
 
 tableRow : TableView -> Html Msg
@@ -305,8 +577,8 @@ ips node =
         node.info.ips
 
 
-nodePane : Model -> NodeView -> Html Msg
-nodePane model view =
+nodePage : Model -> NodeView -> Html Msg
+nodePage model view =
     let
         node =
             view.node
@@ -331,6 +603,7 @@ nodePane model view =
                     nodeTablePane1 model view t
             ]
         ]
+        |> sidebarLayout2 model
 
 
 tableProps : TableData -> List (Html Msg)
@@ -352,14 +625,14 @@ tableReplicas : TableData -> Html Msg
 tableReplicas table =
     div []
         [ h6 [] [ text "Replicas" ]
-        , tableMedia "Memory" table.copies.mem
-        , tableMedia "Disc" table.copies.disc
-        , tableMedia "Memory and disc" table.copies.both
+        , tableMediaPane "Memory" table.copies.mem
+        , tableMediaPane "Disc" table.copies.disc
+        , tableMediaPane "Memory and disc" table.copies.both
         ]
 
 
-tableMedia : String -> List String -> Html Msg
-tableMedia title hostnames =
+tableMediaPane : String -> List String -> Html Msg
+tableMediaPane title hostnames =
     case hostnames of
         [] ->
             div [] []
@@ -419,6 +692,39 @@ tableReplica model view table =
                     ]
                 , div [ class "mx-2 d-inline-flex loading" ] []
                 ]
+
+
+tableStorageSelect : TableStorage -> (String -> Msg) -> Html Msg
+tableStorageSelect selected action =
+    select [ class "form-select", onChange action ]
+        (List.map
+            (\s ->
+                option [] [ s |> tableStorageToString |> text ]
+            )
+            tableStorage
+        )
+
+
+tableMediaSelect : Model -> (String -> Msg) -> Html Msg
+tableMediaSelect model action =
+    select [ class "form-select", onChange action ]
+        (List.map
+            (\m ->
+                option [] [ m |> tableMediaToString |> text ]
+            )
+            tableMedia
+        )
+
+
+nodesSelect : Model -> (String -> Msg) -> Html Msg
+nodesSelect model action =
+    select [ class "form-select", onChange action ]
+        (List.map
+            (\v ->
+                option [] [ text v.node.info.hostname ]
+            )
+            (nodes model)
+        )
 
 
 tableAddReplicaPane : Model -> NodeView -> TableData -> Html Msg
@@ -756,6 +1062,12 @@ fEmail title v action =
         []
 
 
+fText : String -> String -> (String -> Msg) -> Html Msg
+fText title v action =
+    input [ class "form-input", placeholder title, type_ "text", value v, onInput action ]
+        []
+
+
 fLabel : String -> Html Msg
 fLabel title =
     label [ class "form-label" ]
@@ -765,6 +1077,12 @@ fLabel title =
 pButton : String -> Msg -> Html Msg
 pButton title action =
     button [ class "btn btn-primary", onClick action ]
+        [ text title ]
+
+
+disabledPButton : String -> Html Msg
+disabledPButton title =
+    button [ class "btn btn-primary disabled" ]
         [ text title ]
 
 

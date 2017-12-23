@@ -11,14 +11,15 @@ type alias Flags =
     }
 
 
-type Perspective
-    = Servers
-    | Database
-
-
 type State
     = SignedOut
-    | SignedIn
+    | Tables
+    | NewTable
+    | Table
+    | Nodes
+    | Node
+    | NodeTable
+    | CreatingTable
 
 
 type alias LoginData =
@@ -41,11 +42,6 @@ type alias UserMsg =
 
 type alias UserData =
     { first : String }
-
-
-type NodeTab
-    = Connections
-    | Tables
 
 
 type alias NodeView =
@@ -124,6 +120,31 @@ type alias TableCopiesData =
     }
 
 
+type alias NewTableData =
+    { name : String
+    , storage : TableStorage
+    , replicas : Dict String TableReplicaData
+    }
+
+
+type alias TableReplicaData =
+    { node : String
+    , media : TableMedia
+    }
+
+
+type TableStorage
+    = Bag
+    | Set
+    | OrderedSet
+
+
+type TableMedia
+    = Disc
+    | Memory
+    | Both
+
+
 type alias PerfData =
     { cpu : List CpuData
     , mem : MemData
@@ -152,9 +173,11 @@ type alias Model =
     , state : State
     , nodes : Dict String NodeView
     , tables : Dict String TableView
-    , perspective : Perspective
     , node : Maybe NodeView
     , table : Maybe TableView
     , hostname : Maybe String
     , media : Maybe String
+    , newTableData : Maybe NewTableData
+    , nodeSelection : Maybe String
+    , tableMediaSelection : Maybe TableMedia
     }

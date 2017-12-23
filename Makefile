@@ -42,4 +42,6 @@ admin:
 	@cd ui/admin; yarn start
 ui:
 	@cd ui/admin; yarn build; cp dist/app.js ../../apps/admin/priv; cd ../..
+	
+ui_deploy:
 	@ansible-playbook -i inventories/a playbooks/ui.yml 

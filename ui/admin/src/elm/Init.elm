@@ -18,11 +18,13 @@ newModel flags =
     , state = SignedOut
     , nodes = Dict.empty
     , tables = Dict.empty
-    , perspective = Servers
     , node = Nothing
     , table = Nothing
     , hostname = Nothing
     , media = Nothing
+    , newTableData = Nothing
+    , nodeSelection = Nothing
+    , tableMediaSelection = Nothing
     }
 
 
@@ -292,3 +294,194 @@ cpu node =
             )
         |> avg
         |> round
+
+
+newDummyTableReplica : Dict String TableReplicaData
+newDummyTableReplica =
+    Dict.insert "node1" { node = "node1", media = Both } Dict.empty
+
+
+newTableData : NewTableData
+newTableData =
+    { name = ""
+    , storage = defaultTableStorage
+    , replicas = Dict.empty
+    }
+
+
+modelWithNewTableName : Model -> NewTableData -> String -> Model
+modelWithNewTableName model d v =
+    let
+        d2 =
+            { d | name = v |> String.trim |> String.toLower }
+    in
+    { model | newTableData = Just d2 }
+
+
+modelWithNewTableStorage : Model -> NewTableData -> TableStorage -> Model
+modelWithNewTableStorage model d v =
+    let
+        d2 =
+            { d | storage = v }
+    in
+    { model | newTableData = Just d2 }
+
+
+tableStorageToString : TableStorage -> String
+tableStorageToString s =
+    case s of
+        Set ->
+            "Set"
+
+        Bag ->
+            "Bag"
+
+        OrderedSet ->
+            "Ordered set"
+
+
+toTableStorage : String -> Maybe TableStorage
+toTableStorage s =
+    case s of
+        "Set" ->
+            Just Set
+
+        "Bag" ->
+            Just Bag
+
+        "Ordered set" ->
+            Just OrderedSet
+
+        _ ->
+            Nothing
+
+
+tableMedia : List TableMedia
+tableMedia =
+    [ Both, Memory, Disc ]
+
+
+defaultTableMedia : TableMedia
+defaultTableMedia =
+    Both
+
+
+tableStorage : List TableStorage
+tableStorage =
+    [ Set, Bag, OrderedSet ]
+
+
+defaultTableStorage : TableStorage
+defaultTableStorage =
+    Set
+
+
+stringToTableMedia : String -> Maybe TableMedia
+stringToTableMedia str =
+    case str of
+        "Disc only" ->
+            Just Disc
+
+        "Memory only" ->
+            Just Memory
+
+        "Memory and disc" ->
+            Just Both
+
+        _ ->
+            Nothing
+
+
+tableMediaToString : TableMedia -> String
+tableMediaToString m =
+    case m of
+        Disc ->
+            "Disc only"
+
+        Memory ->
+            "Memory only"
+
+        Both ->
+            "Memory and disc"
+
+
+newTableReplicas : NewTableData -> List TableReplicaData
+newTableReplicas d =
+    d.replicas
+        |> Dict.values
+        |> List.sortWith
+            (\r1 ->
+                \r2 ->
+                    compare r1.node r2.node
+            )
+
+
+modelWithoutNewTableReplica : Model -> NewTableData -> TableReplicaData -> Model
+modelWithoutNewTableReplica model t r =
+    let
+        r2 =
+            Dict.remove r.node t.replicas
+
+        t2 =
+            { t | replicas = r2 }
+    in
+    { model | newTableData = Just t2 }
+
+
+nodeSelection : Model -> Maybe NodeView
+nodeSelection model =
+    case model.nodeSelection of
+        Nothing ->
+            model |> nodes |> List.head
+
+        Just n ->
+            Dict.get n model.nodes
+
+
+modelWithNewTableReplica : Model -> NewTableData -> NodeView -> Model
+modelWithNewTableReplica model t v =
+    let
+        r =
+            t.replicas
+
+        hostname =
+            v.node.info.hostname
+
+        media =
+            case model.tableMediaSelection of
+                Nothing ->
+                    defaultTableMedia
+
+                Just m ->
+                    m
+
+        r2 =
+            Dict.insert hostname
+                { node = hostname
+                , media = media
+                }
+                r
+
+        t2 =
+            { t | replicas = r2 }
+    in
+    { model
+        | newTableData = Just t2
+        , nodeSelection = Nothing
+        , tableMediaSelection = Nothing
+    }
+
+
+canCreateTable : Model -> Bool
+canCreateTable model =
+    case model.newTableData of
+        Nothing ->
+            False
+
+        Just t ->
+            case t.name of
+                "" ->
+                    False
+
+                _ ->
+                    t.replicas |> Dict.isEmpty |> not

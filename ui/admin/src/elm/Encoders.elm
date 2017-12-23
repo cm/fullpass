@@ -1,5 +1,6 @@
 module Encoders exposing (..)
 
+import Dict exposing (..)
 import FileReader exposing (..)
 import Http exposing (..)
 import Json.Encode as Encode exposing (encode, string)
@@ -41,7 +42,7 @@ encodeNodes : String -> String
 encodeNodes session =
     Encode.encode 0
         (Encode.object
-            [ ( "action", Encode.string "cluster_nodes" )
+            [ ( "action", Encode.string "nodes" )
             , ( "session", Encode.string session )
             ]
         )
@@ -51,7 +52,7 @@ encodeDeleteTableReplica : String -> String -> String -> String
 encodeDeleteTableReplica session hostname tablename =
     Encode.encode 0
         (Encode.object
-            [ ( "action", Encode.string "cluster_delete_table" )
+            [ ( "action", Encode.string "delete_table_replica" )
             , ( "session", Encode.string session )
             , ( "host", Encode.string hostname )
             , ( "table", Encode.string tablename )
@@ -63,11 +64,60 @@ encodeAddReplica : String -> String -> String -> String -> String -> String
 encodeAddReplica session hostname tablename peer media =
     Encode.encode 0
         (Encode.object
-            [ ( "action", Encode.string "cluster_add_table" )
+            [ ( "action", Encode.string "add_table_replica" )
             , ( "session", Encode.string session )
             , ( "host", Encode.string hostname )
             , ( "table", Encode.string tablename )
             , ( "peer", Encode.string peer )
             , ( "media", Encode.string media )
+            ]
+        )
+
+
+encodeTableStorage : TableStorage -> String
+encodeTableStorage s =
+    case s of
+        Set ->
+            "set"
+
+        Bag ->
+            "bag"
+
+        OrderedSet ->
+            "ordered_set"
+
+
+encodeNewTableReplicas : TableMedia -> Dict String TableReplicaData -> Encode.Value
+encodeNewTableReplicas media replicas =
+    let
+        nodes =
+            replicas
+                |> Dict.values
+                |> List.foldl
+                    (\r ->
+                        \n ->
+                            case r.media == media of
+                                True ->
+                                    r.node :: n
+
+                                False ->
+                                    n
+                    )
+                    []
+    in
+    nodes |> List.map Encode.string |> Encode.list
+
+
+encodeCreateTable : String -> NewTableData -> String
+encodeCreateTable session data =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "create_table" )
+            , ( "session", Encode.string session )
+            , ( "name", Encode.string data.name )
+            , ( "type", data.storage |> encodeTableStorage |> Encode.string )
+            , ( "memory", encodeNewTableReplicas Memory data.replicas )
+            , ( "disc", encodeNewTableReplicas Disc data.replicas )
+            , ( "both", encodeNewTableReplicas Both data.replicas )
             ]
         )

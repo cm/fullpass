@@ -17,8 +17,10 @@ type Msg
     | WsPong
     | ConnectOk String
     | Login
-    | ShowPerspective Perspective
+    | ShowNodes
     | ShowNode NodeView
+    | ShowTables
+    | ShowNewTable
     | ShowTable TableView
     | ShowNodeTable NodeView TableData
     | OnLoginEmail String
@@ -28,8 +30,15 @@ type Msg
     | Logout
     | LogoutOk
     | LogoutErr UserMsg
-    | Nodes (List NodeData)
+    | NodeList (List NodeData)
     | DeleteTableReplica NodeView TableData
     | AddTableReplica NodeView TableData
     | HostnameSelected String
     | MediaSelected String
+    | NewTableNameChanged String
+    | NewTableStorageChanged String
+    | RemoveNewTableReplica TableReplicaData
+    | NewTableReplicaNodeChanged String
+    | NewTableReplicaMediaChanged String
+    | AddNewTableReplica
+    | CreateTable

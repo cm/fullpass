@@ -3,12 +3,12 @@
 
 spec() -> [].
 
-key() -> cluster_nodes.
+key() -> nodes.
 
 do(_, S) ->
     case cmcluster_server:all_nodes() of
         {ok, Nodes} ->
-            {ok, cluster_nodes, Nodes, S};
+            {ok, nodes, Nodes, S};
         {error, E} ->
             {error, E, S}
     end.
