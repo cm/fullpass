@@ -50,10 +50,10 @@ update msg model =
             { model | state = Tables } ! []
 
         ShowNode n ->
-            { model | node = Just n } ! []
+            { model | state = Node, node = Just n } ! []
 
         ShowTable t ->
-            { model | table = Just t } ! []
+            { model | state = Table, table = Just t } ! []
 
         ShowNewTable ->
             case model.newTableData of
