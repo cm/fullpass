@@ -472,6 +472,11 @@ modelWithNewTableReplica model t v =
     }
 
 
+quorumSize : Model -> Int
+quorumSize model =
+    (model |> nodes |> List.length) // 2 + 1
+
+
 canCreateTable : Model -> Bool
 canCreateTable model =
     case model.newTableData of

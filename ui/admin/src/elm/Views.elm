@@ -407,7 +407,7 @@ newTablePage model =
                         , div [ class "form-group" ]
                             [ dButton "Add replica" AddNewTableReplica ]
                         , div [ class "form-group py-2" ]
-                            [ newTableDataReplicasPane data
+                            [ newTableDataReplicasPane model data
                             ]
                         ]
                     ]
@@ -425,8 +425,8 @@ newTablePage model =
                 |> sidebarLayout2 model
 
 
-newTableDataReplicasPane : NewTableData -> Html Msg
-newTableDataReplicasPane data =
+newTableDataReplicasPane : Model -> NewTableData -> Html Msg
+newTableDataReplicasPane model data =
     let
         replicas =
             newTableReplicas data
@@ -435,7 +435,7 @@ newTableDataReplicasPane data =
         0 ->
             div [ class "text-secondary", style [ ( "vertical-align", "middle" ) ] ]
                 [ div [ class "d-inline-block" ]
-                    [ data |> newTableStatusColor |> statusCircle "16px" ]
+                    [ data |> newTableStatusColor model |> statusCircle "16px" ]
                 , div [ class "d-inline-block mx-2 " ]
                     [ "No replicas defined yet" |> text ]
                 ]
@@ -444,7 +444,7 @@ newTableDataReplicasPane data =
             table [ class "table table-striped table-hover" ]
                 [ thead []
                     [ th []
-                        [ data |> newTableStatusColor |> statusCircle "16px"
+                        [ data |> newTableStatusColor model |> statusCircle "16px"
                         ]
                     , th [] []
                     , th [] []
@@ -520,8 +520,8 @@ tableStatusColor v =
             "error"
 
 
-newTableStatusColor : NewTableData -> String
-newTableStatusColor data =
+newTableStatusColor : Model -> NewTableData -> String
+newTableStatusColor model data =
     let
         replicas =
             newTableReplicas data
@@ -530,11 +530,13 @@ newTableStatusColor data =
         0 ->
             "error"
 
-        1 ->
-            "warning"
+        r ->
+            case r > quorumSize model of
+                False ->
+                    "warning"
 
-        _ ->
-            "success"
+                True ->
+                    "success"
 
 
 tableRow : TableView -> Html Msg
