@@ -1,0 +1,39 @@
+- hosts: all
+  vars_files:
+    - ../vars.yml
+  tasks:
+
+    - name: Checkout source code
+      git:
+        repo: "https://github.com/cm/fullpass.git"
+        dest: "/home/{{ app_user }}/app"
+        clone: no
+        force: yes
+    
+    - name: Remove rebar.lock
+      file:
+        path:  "/home/{{ app_user }}/app/rebar.lock"
+        state: absent
+
+    - name: Fix permissions
+      file:
+        path: "/home/{{ app_user }}"
+        state: "directory"
+        owner: "{{ app_user }}"
+        group: "staff"
+        recurse: yes
+
+    - name: Make the release
+      shell: "rebar3 release"
+      args:
+        chdir: "/home/{{ app_user }}/app"
+      become: yes
+      become_user: "{{ app_user }}"
+    
+    - name: Start {{ app_name }}
+      service:
+        name: "{{ app_name }}"
+        state: "{{ item }}"
+      with_items:
+        - stopped
+        - started
