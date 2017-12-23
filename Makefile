@@ -41,9 +41,11 @@ app:
 admin:
 	@cd ui/admin; yarn start
 
-dev: 
-	@cd ui/admin; yarn build; cp dist/app.js ../../apps/admin/priv; cd ../..
+dev: ui_dist push 
 	@ansible-playbook -i inventories/a playbooks/dev.yml
+
+ui_dist:
+	@cd ui/admin; yarn build; cp dist/app.js ../../apps/admin/priv; cd ../..
 
 ui:
 	@ansible-playbook -i inventories/a playbooks/ui.yml 
