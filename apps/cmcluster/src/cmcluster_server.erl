@@ -41,8 +41,15 @@ red(info, {nodedown, Node}, Data) ->
 
 red({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
-    {keep_state, Data, {reply, From, Nodes}}.
+    {keep_state, Data, {reply, From, Nodes}};
 
+red({call, From}, drop_schema, Data) ->
+    Res= drop_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+red({call, From}, create_schema, Data) ->
+    Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}}.
 
 yellow(info, {nodeup, Node}, Data) ->
     State = state(),
@@ -57,7 +64,15 @@ yellow(info, {nodedown, Node}, Data) ->
 
 yellow({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
-    {keep_state, Data, {reply, From, Nodes}}.
+    {keep_state, Data, {reply, From, Nodes}};
+
+yellow({call, From}, drop_schema, Data) ->
+    Res= drop_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+yellow({call, From}, create_schema, Data) ->
+    Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}}.
 
 green(info, {nodeup, Node}, Data) ->
     State = state(),
@@ -72,8 +87,15 @@ green(info, {nodedown, Node}, Data) ->
 
 green({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
-    {keep_state, Data, {reply, From, Nodes}}.
+    {keep_state, Data, {reply, From, Nodes}};
 
+green({call, From}, drop_schema, Data) ->
+    Res= drop_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+green({call, From}, create_schema, Data) ->
+    Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}}.
 
 join(green) ->
     LocalMembers = pg2:get_local_members(cmcluster),
@@ -128,3 +150,9 @@ info(nodes, _) ->
                  tables => cmdb:tables_info()
                }
      }.
+
+drop_schema() -> 
+    cmdb:drop_schema(node()).
+
+create_schema() -> 
+    cmdb:create_schema(node()).
