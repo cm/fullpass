@@ -279,7 +279,7 @@ nodeTableBreadcrumb model view =
                 ]
             ]
         , li [ class "breadcrumb-item" ]
-            [ a [ href "#", onClick (ShowNode view) ]
+            [ a [ href "#", onClick (ShowNode view.node.info.hostname) ]
                 [ text view.node.info.hostname ]
             ]
         , li [ class "breadcrumb-item" ]
@@ -371,7 +371,7 @@ nodeRow view =
         [ td [ style [ ( "width", "40px" ) ] ]
             [ view.node |> nodeStatusColor |> statusCircle "28px" ]
         , td []
-            [ button [ class "btn btn-link", onClick (ShowNode view) ]
+            [ button [ class "btn btn-link", onClick (ShowNode view.node.info.hostname) ]
                 [ text view.node.info.hostname
                 ]
             ]
@@ -489,13 +489,7 @@ tablesPage model =
         [ div []
             [ pButton "Add new..." ShowNewTable ]
         , table [ class "mt-2 table table-striped table-hover" ]
-            [ thead []
-                [ tr []
-                    [ th [ style [ ( "width", "40px" ) ] ] []
-                    , th [] [ text "Name" ]
-                    ]
-                ]
-            , tbody []
+            [ tbody []
                 (model
                     |> tables
                     |> List.map tableRow
@@ -566,8 +560,9 @@ tableRow view =
             [ button [ class "btn btn-link", onClick (ShowTable view) ]
                 [ text view.table.name
                 ]
-
-            --    , tableGroups view
+            ]
+        , td []
+            [ tableGroups view
             ]
         ]
 
@@ -583,7 +578,13 @@ tableGroups view =
 tableGroup : NodeGroup -> Html Msg
 tableGroup group =
     label [ class "label label-rounded mx-2" ]
-        [ group.all |> String.join " " |> text ]
+        (group.all |> List.map tableGroupHost)
+
+
+tableGroupHost : String -> Html Msg
+tableGroupHost host =
+    span [ class "c-hand", onClick (ShowNode host) ]
+        [ text host ]
 
 
 ips : NodeData -> List (Html Msg)

@@ -256,8 +256,8 @@ groups v =
         |> Dict.values
 
 
-nodeByName : NodeView -> NodeView -> Order
-nodeByName n1 n2 =
+compareNodeByName : NodeView -> NodeView -> Order
+compareNodeByName n1 n2 =
     compare n1.node.info.hostname n2.node.info.hostname
 
 
@@ -270,7 +270,7 @@ nodes : Model -> List NodeView
 nodes model =
     model.nodes
         |> Dict.values
-        |> List.sortWith nodeByName
+        |> List.sortWith compareNodeByName
 
 
 tables : Model -> List TableView
@@ -538,3 +538,8 @@ canCreateTable model =
 
                 _ ->
                     t.replicas |> Dict.isEmpty |> not
+
+
+nodeByName : Model -> String -> Maybe NodeView
+nodeByName model name =
+    model.nodes |> Dict.get name

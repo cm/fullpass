@@ -52,8 +52,16 @@ update msg model =
         ShowTables ->
             { model | state = Tables } ! []
 
-        ShowNode n ->
-            { model | state = Node, node = Just n.node.info.hostname } ! []
+        ShowNode name ->
+            case name |> nodeByName model of
+                Nothing ->
+                    { contents = "No such node " ++ name
+                    , severity = SevError
+                    }
+                        |> error model
+
+                Just v ->
+                    { model | state = Node, node = Just name } ! []
 
         ShowTable t ->
             { model | state = Table, table = Just t } ! []

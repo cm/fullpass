@@ -19,7 +19,7 @@ type Msg
     | Login
     | UserMessageRead
     | ShowNodes
-    | ShowNode NodeView
+    | ShowNode String
     | ShowTables
     | ShowNewTable
     | ShowTable TableView
