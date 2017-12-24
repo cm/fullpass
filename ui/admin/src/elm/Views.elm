@@ -906,8 +906,7 @@ nodeSchemaReplicas model view =
                                     |> List.map
                                         (\host ->
                                             label
-                                                [ class "c-hand label label-rounded"
-                                                , style [ ( "margin-right", "4px" ) ]
+                                                [ class "mx-2 c-hand label label-rounded"
                                                 , onClick (ShowNode host)
                                                 ]
                                                 [ text host ]
@@ -942,7 +941,7 @@ nodePeers node =
         peers =
             case node.cluster.peers of
                 [] ->
-                    [ span []
+                    [ span [ class "mx-2" ]
                         [ text "This server has no connections" ]
                     ]
 
