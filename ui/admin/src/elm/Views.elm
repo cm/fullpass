@@ -327,13 +327,7 @@ nodesPage : Model -> Html Msg
 nodesPage model =
     div [ class "" ]
         [ table [ class "table table-striped table-hover" ]
-            [ thead []
-                [ tr []
-                    [ th [ style [ ( "width", "40px" ) ] ] []
-                    , th [] [ text "Name" ]
-                    ]
-                ]
-            , tbody []
+            [ tbody []
                 (model
                     |> nodes
                     |> List.map nodeRow
@@ -487,7 +481,7 @@ tablesPage : Model -> Html Msg
 tablesPage model =
     div []
         [ div []
-            [ pButton "Add new..." ShowNewTable ]
+            [ pButton "Add new ..." ShowNewTable ]
         , table [ class "mt-2 table table-striped table-hover" ]
             [ tbody []
                 (model
