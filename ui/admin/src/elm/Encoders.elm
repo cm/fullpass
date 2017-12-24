@@ -60,6 +60,28 @@ encodeDeleteTableReplica session hostname tablename =
         )
 
 
+encodeDeleteSchema : String -> String -> String
+encodeDeleteSchema session hostname =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "delete_schema" )
+            , ( "session", Encode.string session )
+            , ( "host", Encode.string hostname )
+            ]
+        )
+
+
+encodeCreateSchema : String -> String -> String
+encodeCreateSchema session hostname =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "create_schema" )
+            , ( "session", Encode.string session )
+            , ( "host", Encode.string hostname )
+            ]
+        )
+
+
 encodeAddReplica : String -> String -> String -> String -> String -> String
 encodeAddReplica session hostname tablename peer media =
     Encode.encode 0

@@ -23,7 +23,7 @@ view model =
             nodesPage model
 
         Node ->
-            case model.node of
+            case model |> selectedNode of
                 Nothing ->
                     "No node to show" |> errorPage model
 
@@ -31,17 +31,11 @@ view model =
                     nodePage model n
 
         NodeTable ->
-            case model.node of
-                Nothing ->
-                    "No node to show" |> errorPage model
-
-                Just v ->
-                    case v.table of
-                        Nothing ->
-                            "No table to show" |> errorPage model
-
-                        Just t ->
-                            nodePage model v
+            withSelectedNodeTable model
+                (\v ->
+                    \t ->
+                        nodeTablePage model v t
+                )
 
         Tables ->
             tablesPage model
@@ -60,6 +54,29 @@ view model =
         CreatingTable ->
             "Creating page ... "
                 |> waitingPage model
+
+        DeletingSchema ->
+            "Deleting schema ... "
+                |> waitingPage model
+
+        CreatingSchema ->
+            "Creating schema ... "
+                |> waitingPage model
+
+
+withSelectedNodeTable : Model -> (NodeView -> TableData -> Html Msg) -> Html Msg
+withSelectedNodeTable model next =
+    case model |> selectedNode of
+        Nothing ->
+            "No node to show" |> errorPage model
+
+        Just v ->
+            case v |> selectedNodeTable model of
+                Nothing ->
+                    "No table to show" |> errorPage model
+
+                Just t ->
+                    next v t
 
 
 errorPage : Model -> String -> Html Msg
@@ -188,7 +205,7 @@ breadcrumb model =
             nodesBreadcrumb
 
         Node ->
-            case model.node of
+            case model |> selectedNode of
                 Nothing ->
                     nodesBreadcrumb
 
@@ -196,12 +213,12 @@ breadcrumb model =
                     nodeBreadcrumb v
 
         NodeTable ->
-            case model.node of
+            case model |> selectedNode of
                 Nothing ->
                     nodesBreadcrumb
 
                 Just v ->
-                    nodeTableBreadcrumb v
+                    nodeTableBreadcrumb model v
 
         Tables ->
             tablesBreadcrumb
@@ -244,16 +261,16 @@ nodeBreadcrumb view =
         ]
 
 
-nodeTableBreadcrumb : NodeView -> Html Msg
-nodeTableBreadcrumb view =
+nodeTableBreadcrumb : Model -> NodeView -> Html Msg
+nodeTableBreadcrumb model view =
     let
         tableName =
-            case view.table of
+            case model.nodeTable of
                 Nothing ->
-                    "Unknown table"
+                    "No table selected !!"
 
                 Just t ->
-                    t.name
+                    t
     in
     ul [ class "breadcrumb" ]
         [ li [ class "breadcrumb-item" ]
@@ -531,7 +548,7 @@ newTableStatusColor model data =
             "error"
 
         r ->
-            case r > quorumSize model of
+            case r >= quorumSize model of
                 False ->
                     "warning"
 
@@ -573,7 +590,13 @@ ips : NodeData -> List (Html Msg)
 ips node =
     List.map
         (\i ->
-            label [ class "mx-2 label label-rounded", style [ ( "font-size", "14px" ) ] ]
+            label
+                [ class "label label-rounded"
+                , style
+                    [ ( "font-size", "14px" )
+                    , ( "margin-right", "2px" )
+                    ]
+                ]
                 [ text i ]
         )
         node.info.ips
@@ -585,24 +608,43 @@ nodePage model view =
         node =
             view.node
     in
-    div [ class "mt-2 container columns" ]
-        [ div [ class "col-4" ]
-            [ h4 []
-                (text node.info.hostname
-                    :: ips node
-                )
-            , node |> nodeResources
-            , node |> nodePeers
-            , view |> nodeTables model
+    div [ class "" ]
+        [ div [ class "columns" ]
+            [ div [ class "column col-12" ]
+                [ h4 []
+                    [ text node.info.hostname
+                    ]
+                ]
             ]
-        , div [ class "mx-2 col-4" ]
-            [ case view.table of
-                Nothing ->
-                    div [ class "text-gray" ]
-                        [ text "No table selected" ]
-
-                Just t ->
-                    nodeTablePane1 model view t
+        , div [ class "columns" ]
+            [ div [ class "column col-3" ]
+                [ text "Ip addresses" ]
+            , div [ class "column col-9" ]
+                (ips node)
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Performance" ]
+            , div [ class "column col-9" ]
+                [ node |> nodeResources ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Peers" ]
+            , div [ class "column col-9" ]
+                [ node |> nodePeers ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Schema" ]
+            , div [ class "column col-9" ]
+                [ view |> nodeSchema ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Tables" ]
+            , div [ class "column col-9" ]
+                [ view |> nodeTables model ]
             ]
         ]
         |> sidebarLayout2 model
@@ -654,8 +696,8 @@ tableMediaPane title hostnames =
                 ]
 
 
-nodeTablePane1 : Model -> NodeView -> TableData -> Html Msg
-nodeTablePane1 model view table =
+nodeTablePage : Model -> NodeView -> TableData -> Html Msg
+nodeTablePage model view table =
     div []
         [ h4 []
             (text table.name
@@ -664,6 +706,7 @@ nodeTablePane1 model view table =
         , tableReplicas table
         , tableReplica model view table
         ]
+        |> sidebarLayout2 model
 
 
 onChange : (String -> msg) -> Html.Attribute msg
@@ -801,19 +844,19 @@ tableAddReplicaPane model view table =
 tableDeletePane : NodeView -> TableData -> Html Msg
 tableDeletePane view table =
     let
-        title =
+        ( title, action ) =
             case table.name of
                 "schema" ->
-                    "Delete entire schema"
+                    ( "Delete entire schema", DeleteSchema view )
 
                 _ ->
-                    "Delete this replica"
+                    ( "Delete this replica", DeleteTableReplica view table )
     in
     div []
         [ button
             [ class "btn btn-error"
             , style [ ( "width", "100%" ) ]
-            , onClick (DeleteTableReplica view table)
+            , onClick action
             ]
             [ text title ]
         ]
@@ -822,10 +865,19 @@ tableDeletePane view table =
 nodeResources : NodeData -> Html Msg
 nodeResources node =
     div []
-        [ h6 [] [ text "Resources" ]
-        , node |> cpuUsage
+        [ node |> cpuUsage
         , node |> memAvailable
         ]
+
+
+nodeSchema : NodeView -> Html Msg
+nodeSchema view =
+    case hasEmptySchema view.node of
+        True ->
+            pButton "Create schema" (CreateSchema view)
+
+        False ->
+            eButton "Delete schema" (DeleteSchema view)
 
 
 nodePeers : NodeData -> Html Msg
@@ -834,7 +886,9 @@ nodePeers node =
         peers =
             case node.cluster.peers of
                 [] ->
-                    [ text "This server has no connections" ]
+                    [ span []
+                        [ text "This server has no connections" ]
+                    ]
 
                 names ->
                     List.map
@@ -845,9 +899,8 @@ nodePeers node =
                         names
     in
     div [ class "mt-2" ]
-        [ h6 [] [ text "Connections" ]
-        , div []
-            [ div [ class "d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
+        [ div []
+            [ div [ class "mx-2 d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
                 [ node |> nodeStatusColor |> statusCircle "16px" ]
             , div [ class "d-inline-flex mx-2", style [ ( "vertical-align", "middle" ) ] ]
                 peers
@@ -857,10 +910,26 @@ nodePeers node =
 
 nodeTables : Model -> NodeView -> Html Msg
 nodeTables model view =
-    div [ class "mt-2" ]
-        (h6 [] [ text "Database" ]
-            :: (view |> dbTables model)
-        )
+    let
+        userTables =
+            view.node.db.tables
+                |> List.filter
+                    (\t ->
+                        t.name /= "schema"
+                    )
+    in
+    case userTables of
+        [] ->
+            span [] [ text "No tables yet" ]
+
+        _ ->
+            table [ class "mt-2 table table-striped table-hover" ]
+                [ tbody []
+                    (List.map
+                        (dbTable model view)
+                        userTables
+                    )
+                ]
 
 
 healthSummary : NodeData -> Html Msg
@@ -888,11 +957,6 @@ tablePane view =
     div [] []
 
 
-dbTables : Model -> NodeView -> List (Html Msg)
-dbTables model view =
-    List.map (dbTable model view) view.node.db.tables
-
-
 dbTable : Model -> NodeView -> TableData -> Html Msg
 dbTable model view table =
     let
@@ -907,23 +971,13 @@ dbTable model view table =
                 Just tv ->
                     tv |> tableStatusColor
     in
-    div []
-        [ div [ class "d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
-            [ tableColor |> statusCircle "16px" ]
-        , div [ class "d-inline-flex mx-2", style [ ( "vertical-align", "middle" ) ] ]
-            [ case view.table of
-                Just t ->
-                    case t.name == table.name of
-                        True ->
-                            text table.name
-
-                        False ->
-                            a [ href "#", onClick (ShowNodeTable view table) ]
-                                [ text table.name ]
-
-                _ ->
-                    a [ href "#", onClick (ShowNodeTable view table) ]
-                        [ text table.name ]
+    tr []
+        [ td [ class "col-1" ]
+            [ tableColor |> statusCircle "16px"
+            ]
+        , td []
+            [ a [ href "#", onClick (ShowNodeTable view table) ]
+                [ text table.name ]
             ]
         ]
 
@@ -1039,7 +1093,7 @@ userMsg err =
             div [] []
 
         Just msg ->
-            toast msg.contents msg.severity
+            toast msg.contents msg.severity UserMessageRead
 
 
 activeCss : Bool -> String
@@ -1079,6 +1133,12 @@ fLabel title =
 pButton : String -> Msg -> Html Msg
 pButton title action =
     button [ class "btn btn-primary", onClick action ]
+        [ text title ]
+
+
+eButton : String -> Msg -> Html Msg
+eButton title action =
+    button [ class "btn btn-error", onClick action ]
         [ text title ]
 
 

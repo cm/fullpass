@@ -1,6 +1,7 @@
 -module(cmdb).
--export([behaviour_info/1, all_tables/0]).
--export([started/0, tables_info/0]).
+-export([behaviour_info/1, all_tables/0, table_for/1]).
+-export([started/0, table_info/1, tables_info/0]).
+-export([drop/1, drop/2, create_schema/1, drop_schema/1, exists/1]).
 -export([start/0, info/0, c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
 -record(triplet, {s, p, o}).
 
@@ -9,6 +10,19 @@ behaviour_info(callbacks) ->
 
 all_tables() ->
     lists:flatten([M:cmdb_tables() || M <-erlang:loaded(), cmkit:implements(M, behaviour_info(callbacks))]).
+
+table_for(Name) when is_binary(Name) ->
+    Match = lists:filter(fun({N, _, _}) -> 
+                         cmkit:to_bin(N) =:= Name
+                end, all_tables()),
+    case Match of 
+        [{_, _, _}=Tab] ->
+            {ok, Tab};
+        [] ->
+            {error, no_such_table};
+        _ ->
+            {error, duplicate_table}
+    end.
 
 start() ->
     mnesia:stop(),
@@ -37,7 +51,7 @@ table_info(T) ->
 
 
 tables_info() ->
-    Tables = [ table_info(T) || {T, _, _} <- all_tables() ],
+    Tables = [ table_info(T) || {T, _, _} <- all_tables(), exists(T) ],
     [table_info(schema) | Tables].    
 
 encode_cookie(T) ->
@@ -46,6 +60,36 @@ encode_cookie(T) ->
 
 clear() ->
     [clear(Tab) || Tab <- all_tables()].
+
+drop_schema(Node) ->
+    cmkit:log({cmdb, deleting_schema, Node}),
+    mnesia:stop(),
+    R = mnesia:delete_schema([Node]),
+    mnesia:start(),
+    R.
+
+create_schema(Node) ->
+    cmkit:log({cmdb, creating_schema, Node}),
+    mnesia:stop(),
+    R = mnesia:create_schema([Node]),
+    mnesia:start(),
+    R.
+
+drop(Tab, Node) ->
+    case mnesia:del_table_copy(Tab, Node) of 
+        {aborted, {no_exists, _}} ->
+            {error, not_found};
+        {aborted, {badarg, Tab, unknown}} ->
+            {error, not_found};
+        {atomic, ok} -> 
+            ok
+    end.
+
+drop(Tab) ->
+    mnesia:delete_table(Tab).
+
+has_copies(Tab, Media) ->
+    length(mnesia:table_info(Tab, Media)) > 0.
 
 clear({T, _, _}) ->
     case mnesia:clear_table(T) of
@@ -62,43 +106,70 @@ await(Tabs) ->
 
 
 c({Tab, Type, Storage}) ->
-    case exists(Tab) of
+    case has_copies(schema, disc_copies) of 
+        true -> 
+            case exists(Tab) of
+                false -> 
+                    case mnesia:create_table(Tab,
+                                             [{attributes, record_info(fields, triplet)},
+                                              {record_name, triplet},
+                                              {type, Type},
+                                              {Storage, [node()]}]) of 
+                        {atomic, ok} -> 
+                            ok;
+                        {aborted, Reason} -> 
+                            {error, Reason}
+                    end;
+                true ->
+                    {error, exists}
+            end;
         false -> 
-            mnesia:create_table(Tab,
-                                [{attributes, record_info(fields, triplet)},
-                                 {record_name, triplet},
-                                 {type, Type},
-                                 {Storage, [node()]}]);
-        true ->
-            exists
+            {error, schema_not_initialized}
     end.
 
 c(Tab, Type, Storage) ->
-    Info = [{attributes, record_info(fields, triplet)},
-                                 {record_name, triplet},
-                                 {type, Type}],
-    Info2 = add_copies_info(Info, Storage),
-    case exists(Tab) of
+    case has_copies(schema, disc_copies) of
+        true -> 
+            Info = [{attributes, record_info(fields, triplet)},
+                    {record_name, triplet},
+                    {type, Type}],
+            Info2 = add_copies_info(Info, Storage),
+            case exists(Tab) of
+                false -> 
+                    case mnesia:create_table(Tab, Info2) of
+                        {atomic, ok} -> 
+                            ok;
+                        {aborted, E} -> 
+                            {error, E}
+                    end;
+                true ->
+                    {error, exists}
+            end;
         false -> 
-            mnesia:create_table(Tab, Info2);
-        true ->
-            exists
+            {error, schema_not_initialized}
     end.
 
 
 add_copies_info(Info, []) -> 
     Info;
 
+add_copies_info(Info, [{disc, []}|Rem]) ->
+    add_copies_info(Info, Rem);
+
 add_copies_info(Info, [{disc, Nodes}|Rem]) ->
     add_copies_info([{disc_only_copies, Nodes}|Info], Rem);
 
-add_copies_info(Info, [{mem, Nodes}|Rem]) ->
+add_copies_info(Info, [{memory, []}|Rem]) ->
+    add_copies_info(Info, Rem);
+
+add_copies_info(Info, [{memory, Nodes}|Rem]) ->
     add_copies_info([{ram_copies, Nodes}|Info], Rem);
+
+add_copies_info(Info, [{both, []}|Rem]) ->
+    add_copies_info(Info, Rem);
 
 add_copies_info(Info, [{both, Nodes}|Rem]) ->
     add_copies_info([{disc_copies, Nodes}|Info], Rem).
-
-
 
 exists(TableName) ->
    Tables = mnesia:system_info(tables),

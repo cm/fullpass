@@ -205,11 +205,11 @@ create_table({Tab, _, _}=T, Local) ->
     case table_exists(Tab, Local) of
         false ->
             case cmdb:c(T) of 
-                {atomic, ok} ->
+                ok ->
                     cmkit:log({cmdb, table, created, Tab, mnesia:table_info(Tab, type)}),
                     add_fragments(Tab, [node()]);
                     %cmkit:log({cmdb, table_create_ok, Tab});
-                {aborted, E} -> 
+                {error, E} -> 
                     cmkit:log({cmdb, cmdb, table_create_error, Tab, E})
             end;
 

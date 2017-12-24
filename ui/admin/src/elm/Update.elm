@@ -43,6 +43,9 @@ update msg model =
             in
             m2 ! [ testLogin m2 ]
 
+        UserMessageRead ->
+            { model | userMsg = Nothing } ! []
+
         ShowNodes ->
             { model | state = Nodes } ! []
 
@@ -50,7 +53,7 @@ update msg model =
             { model | state = Tables } ! []
 
         ShowNode n ->
-            { model | state = Node, node = Just n } ! []
+            { model | state = Node, node = Just n.node.info.hostname } ! []
 
         ShowTable t ->
             { model | state = Table, table = Just t } ! []
@@ -67,15 +70,10 @@ update msg model =
                     in
                     { model | state = NewTable, newTableData = Just t2 } ! []
 
-        ShowNodeTable view t ->
-            let
-                node2 =
-                    { view | table = Just t }
-            in
+        ShowNodeTable v t ->
             { model
-                | node = Just node2
-                , hostname = Nothing
-                , media = Nothing
+                | state = NodeTable
+                , nodeTable = Just t.name
             }
                 ! []
 
@@ -120,13 +118,50 @@ update msg model =
             }
                 ! []
 
+        DeleteSchema v ->
+            { model
+                | state = DeletingSchema
+            }
+                ! [ deleteSchema model.flags model.session v.node.info.hostname ]
+
+        DeleteSchemaErr e ->
+            { model
+                | state = Node
+                , userMsg = Just e
+            }
+                ! []
+
+        DeleteSchemaOk ->
+            { model
+                | state = Node
+                , userMsg = Just (infoMsg "Schema deleted")
+            }
+                ! [ fetch_nodes model ]
+
         DeleteTableReplica v t ->
             let
                 v2 =
                     { v | state = DeletingReplica }
             in
-            { model | node = Just v2 }
+            { model | node = Just v2.node.info.hostname }
                 ! [ deleteTableReplica model.flags model.session v.node.info.hostname t.name ]
+
+        DeleteTableReplicaErr e ->
+            { model
+                | state = NodeTable
+                , userMsg = Just e
+            }
+                ! []
+
+        DeleteTableReplicaOk ->
+            withNode model
+                (\view ->
+                    { model
+                        | node = Nothing
+                        , state = Nodes
+                    }
+                        ! [ fetch_nodes model ]
+                )
 
         AddTableReplica v t ->
             case model.hostname of
@@ -143,7 +178,7 @@ update msg model =
                                 v2 =
                                     { v | state = AddingReplica }
                             in
-                            { model | node = Just v2 }
+                            { model | node = Just v2.node.info.hostname }
                                 ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h "both" ]
 
                         _ ->
@@ -159,7 +194,7 @@ update msg model =
                                         v2 =
                                             { v | state = AddingReplica }
                                     in
-                                    { model | node = Just v2 }
+                                    { model | node = Just v2.node.info.hostname }
                                         ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h m ]
 
         HostnameSelected h ->
@@ -244,6 +279,36 @@ update msg model =
                         ! [ createTable model.flags model.session t ]
                 )
 
+        CreateTableErr e ->
+            { model
+                | userMsg = Just e
+                , state = NewTable
+            }
+                ! []
+
+        CreateTableOk ->
+            { model
+                | state = Tables
+            }
+                ! [ fetch_nodes model ]
+
+        CreateSchema v ->
+            { model | state = CreatingSchema }
+                ! [ createSchema model.flags model.session v.node.info.hostname ]
+
+        CreateSchemaErr e ->
+            { model
+                | userMsg = Just e
+            }
+                ! []
+
+        CreateSchemaOk ->
+            { model
+                | state = Node
+                , userMsg = Just (infoMsg "Schema created")
+            }
+                ! [ fetch_nodes model ]
+
 
 withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 withNewTableData model next =
@@ -256,6 +321,19 @@ withNewTableData model next =
 
         Just d ->
             next d
+
+
+withNode : Model -> (NodeView -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+withNode model next =
+    case model |> selectedNode of
+        Nothing ->
+            { contents = "Missing 'newTableData' in model. This is a bug. Please fix."
+            , severity = SevWarn
+            }
+                |> error model
+
+        Just v ->
+            next v
 
 
 testLogin : Model -> Cmd Msg

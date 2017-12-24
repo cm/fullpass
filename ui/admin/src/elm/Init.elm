@@ -19,6 +19,7 @@ newModel flags =
     , nodes = Dict.empty
     , tables = Dict.empty
     , node = Nothing
+    , nodeTable = Nothing
     , table = Nothing
     , hostname = Nothing
     , media = Nothing
@@ -120,6 +121,31 @@ indexedNodes model nodes =
         )
         Dict.empty
         nodes
+
+
+selectedNode : Model -> Maybe NodeView
+selectedNode model =
+    case model.node of
+        Nothing ->
+            Nothing
+
+        Just n ->
+            Dict.get n model.nodes
+
+
+selectedNodeTable : Model -> NodeView -> Maybe TableData
+selectedNodeTable model v =
+    case model.nodeTable of
+        Nothing ->
+            Nothing
+
+        Just n ->
+            v.node.db.tables
+                |> List.filter
+                    (\t ->
+                        t.name == n
+                    )
+                |> List.head
 
 
 modelWithNodeView : Model -> NodeView -> Model
@@ -475,6 +501,28 @@ modelWithNewTableReplica model t v =
 quorumSize : Model -> Int
 quorumSize model =
     (model |> nodes |> List.length) // 2 + 1
+
+
+hasEmptySchema : NodeData -> Bool
+hasEmptySchema node =
+    case node.db.tables of
+        [ s ] ->
+            case ( s.name, s.size.count, s.copies.disc, s.copies.both, s.copies.mem ) of
+                ( "schema", 1, [], [], [ host ] ) ->
+                    True
+
+                _ ->
+                    False
+
+        _ ->
+            False
+
+
+infoMsg : String -> UserMsg
+infoMsg text =
+    { contents = text
+    , severity = SevInfo
+    }
 
 
 canCreateTable : Model -> Bool

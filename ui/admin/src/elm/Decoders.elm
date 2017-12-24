@@ -55,6 +55,22 @@ actionErrorDecoder action =
             Decode.map LogoutErr
                 (field "data" errorDecoder)
 
+        "create_table" ->
+            Decode.map CreateTableErr
+                (field "data" errorDecoder)
+
+        "delete_table_replica" ->
+            Decode.map DeleteTableReplicaErr
+                (field "data" errorDecoder)
+
+        "delete_schema" ->
+            Decode.map DeleteSchemaErr
+                (field "data" errorDecoder)
+
+        "create_schema" ->
+            Decode.map CreateSchemaErr
+                (field "data" errorDecoder)
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding error")
                 |> Decode.fail
@@ -106,6 +122,18 @@ actionOkDecoder action =
         "nodes" ->
             Decode.map NodeList
                 (field "data" nodesDecoder)
+
+        "create_table" ->
+            Decode.succeed CreateTableOk
+
+        "delete_table_replica" ->
+            Decode.succeed DeleteTableReplicaOk
+
+        "delete_schema" ->
+            Decode.succeed DeleteSchemaOk
+
+        "create_schema" ->
+            Decode.succeed CreateSchemaOk
 
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding ok")

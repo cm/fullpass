@@ -20,6 +20,8 @@ type State
     | Node
     | NodeTable
     | CreatingTable
+    | CreatingSchema
+    | DeletingSchema
 
 
 type alias LoginData =
@@ -173,7 +175,8 @@ type alias Model =
     , state : State
     , nodes : Dict String NodeView
     , tables : Dict String TableView
-    , node : Maybe NodeView
+    , node : Maybe String
+    , nodeTable : Maybe String
     , table : Maybe TableView
     , hostname : Maybe String
     , media : Maybe String

@@ -52,7 +52,7 @@ userMsg err =
             div [] []
 
         Just msg ->
-            toast msg.contents msg.severity
+            toast msg.contents msg.severity UserMessageRead
 
 
 navItem : String -> String -> Bool -> Msg -> Html Msg
@@ -77,8 +77,8 @@ activeCss a =
             ""
 
 
-toast : String -> Severity -> Html Msg
-toast msg sev =
+toast : String -> Severity -> Msg -> Html Msg
+toast msg sev action =
     let
         sevStr =
             case sev of
@@ -91,7 +91,7 @@ toast msg sev =
                 SevError ->
                     "error"
     in
-    div [ class ("toast toast-" ++ sevStr) ]
+    div [ class ("c-hand toast toast-" ++ sevStr), onClick action ]
         [ button [ class "btn btn-clear float-right" ]
             []
         , text msg
