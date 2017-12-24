@@ -140,12 +140,7 @@ selectedNodeTable model v =
             Nothing
 
         Just n ->
-            v.node.db.tables
-                |> List.filter
-                    (\t ->
-                        t.name == n
-                    )
-                |> List.head
+            nodeTable n v.node
 
 
 modelWithNodeView : Model -> NodeView -> Model
@@ -543,3 +538,10 @@ canCreateTable model =
 nodeByName : Model -> String -> Maybe NodeView
 nodeByName model name =
     model.nodes |> Dict.get name
+
+
+tableNodes : TableData -> List String
+tableNodes t =
+    t.copies.disc
+        ++ t.copies.mem
+        ++ t.copies.both

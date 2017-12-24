@@ -501,6 +501,21 @@ tablePage model t =
         |> sidebarLayout2 model
 
 
+nodeTableStatusColor : Model -> TableData -> String
+nodeTableStatusColor model t =
+    case t |> tableNodes |> List.length of
+        1 ->
+            "error"
+
+        n ->
+            case (model.nodes |> Dict.size) > n of
+                True ->
+                    "warning"
+
+                False ->
+                    "success"
+
+
 tableStatusColor : TableView -> String
 tableStatusColor v =
     let
@@ -588,8 +603,7 @@ ips node =
             label
                 [ class "label label-rounded"
                 , style
-                    [ ( "font-size", "14px" )
-                    , ( "margin-right", "2px" )
+                    [ ( "margin-right", "4px" )
                     ]
                 ]
                 [ text i ]
@@ -633,7 +647,7 @@ nodePage model view =
             [ div [ class "column col-3" ]
                 [ text "Schema" ]
             , div [ class "column col-9" ]
-                [ view |> nodeSchema ]
+                [ view |> nodeSchema model ]
             ]
         , div [ class "columns mt-2" ]
             [ div [ class "column col-3" ]
@@ -865,14 +879,61 @@ nodeResources node =
         ]
 
 
-nodeSchema : NodeView -> Html Msg
-nodeSchema view =
-    case hasEmptySchema view.node of
-        True ->
-            pButton "Create schema" (CreateSchema view)
+nodeSchema : Model -> NodeView -> Html Msg
+nodeSchema model view =
+    div []
+        [ nodeSchemaReplicas model view
+        , nodeSchemaActions view
+        ]
 
-        False ->
-            eButton "Delete schema" (DeleteSchema view)
+
+nodeSchemaReplicas : Model -> NodeView -> Html Msg
+nodeSchemaReplicas model view =
+    case nodeTable "schema" view.node of
+        Nothing ->
+            span [ class "text-secondary" ] [ text "No schema information available" ]
+
+        Just t ->
+            let
+                replicas =
+                    case t |> tableNodes of
+                        [] ->
+                            span [ class "text-secondary" ] [ text "No replicas found" ]
+
+                        hosts ->
+                            div []
+                                (hosts
+                                    |> List.map
+                                        (\host ->
+                                            label
+                                                [ class "c-hand label label-rounded"
+                                                , style [ ( "margin-right", "4px" ) ]
+                                                , onClick (ShowNode host)
+                                                ]
+                                                [ text host ]
+                                        )
+                                )
+            in
+            div [ class "mt-2" ]
+                [ div []
+                    [ div [ class "mx-2 d-inline-flex", style [ ( "vertical-align", "middle" ) ] ]
+                        [ t |> nodeTableStatusColor model |> statusCircle "16px" ]
+                    , div [ class "d-inline-flex mx-2", style [ ( "vertical-align", "middle" ) ] ]
+                        [ replicas ]
+                    ]
+                ]
+
+
+nodeSchemaActions : NodeView -> Html Msg
+nodeSchemaActions view =
+    div [ class "mt-2" ]
+        [ case hasEmptySchema view.node of
+            True ->
+                pButton "Create schema" (CreateSchema view)
+
+            False ->
+                eButton "Delete schema" (DeleteSchema view)
+        ]
 
 
 nodePeers : NodeData -> Html Msg
