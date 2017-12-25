@@ -180,14 +180,15 @@ add(Node, Tab, Type) ->
     mnesia:add_table_copy(Tab, Node, Type).
 
 add(Node) ->
-    case mnesia:change_config(extra_db_nodes, Node) of 
+    case mnesia:change_config(extra_db_nodes, [Node]) of 
         {ok, Node} -> 
             case mnesia:change_table_copy_type(schema, Node, disc_copies) of
                 {atomic, ok} -> ok;
                 {aborted, R} -> {error, R}
             end;
         {error, R} -> 
-            {error, R}
+            cmkit:log({cmdb, error, change_config, extra_db_nodes, Node, R}),
+            {error, mnesia_error}
     end.
 
 t(F) ->

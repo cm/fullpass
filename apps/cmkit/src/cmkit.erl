@@ -230,7 +230,7 @@ node_for_host(H, Nodes) ->
     case Match of 
         [Node] -> {ok, Node};
         [] -> {error, not_found};
-        _ -> {error, conflict}
+        _ -> {error, too_many_nodes}
     end.
 
 hosts_to_nodes([], _, Res) ->

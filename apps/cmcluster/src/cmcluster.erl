@@ -26,14 +26,14 @@ create_schema_replica(Host, TargetHost) ->
     case cmkit:node_for_host(TargetHost) of
         {ok, TargetNode}  ->
             do_in_host(Host, {create_schema_replica, TargetNode});
-        _ ->
-            {error, invalid}
+        {error, E} ->
+            {error, E}
     end.
 
 do_in_host(Host, Op) ->
     case cmkit:node_for_host(Host) of
         {ok, Node} ->
             gen_statem:call({cmcluster_server, Node}, Op);
-        _ ->
-            {error, invalid}
+        {error, E} ->
+            {error, E}
     end.
