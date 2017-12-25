@@ -180,7 +180,12 @@ add(Node, Tab, Type) ->
     mnesia:add_table_copy(Tab, Node, Type).
 
 add(Node) ->
-    add(Node, schema, disc_copies).
+    case add(Node, schema, ram_copies) of 
+        {atomic, ok} -> 
+            mnesia:change_table_copy_type(schema, Node, disc_copies);
+        {aborted, R} -> 
+            {error, R}
+    end.
 
 t(F) ->
     case mnesia:transaction(F) of
