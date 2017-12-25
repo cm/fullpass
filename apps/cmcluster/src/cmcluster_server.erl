@@ -196,13 +196,13 @@ create_schema() ->
 
 create_table_replica(Node, Tab, Type) ->
     MnesiaType = table_copies_for(Type),
-    cmdb:create_table_replica(Node, Tab, MnesiaType).
+    cmdb:add(Node, Tab, MnesiaType).
 
 delete_table_replica(Node, Tab) -> 
-    cmdb:delete_table_replica(Node, Tab).
+    cmdb:drop(Tab, Node).
 
 create_schema_replica(Node) ->
-    cmdb:create_schema_replica(Node).
+    cmdb:add(Node).
 
 
 table_copies_for(disc) -> disc_only_copies;

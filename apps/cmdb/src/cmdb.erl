@@ -1,7 +1,8 @@
 -module(cmdb).
 -export([behaviour_info/1, all_tables/0, table_for/1]).
 -export([started/0, table_info/1, tables_info/0]).
--export([drop/1, drop/2, create_schema/1, drop_schema/1, exists/1]).
+-export([add/3, add/1, drop/1, drop/2, create_schema/1, drop_schema/1, exists/1]).
+
 -export([start/0, info/0, c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
 -record(triplet, {s, p, o}).
 
@@ -174,6 +175,12 @@ add_copies_info(Info, [{both, Nodes}|Rem]) ->
 exists(TableName) ->
    Tables = mnesia:system_info(tables),
    lists:member(TableName,Tables).
+
+add(Node, Tab, Type) ->
+    mnesia:add_table_copy(Tab, Node, Type).
+
+add(Node) ->
+    add(Node, schema, disc_copies).
 
 t(F) ->
     case mnesia:transaction(F) of
