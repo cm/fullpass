@@ -594,13 +594,13 @@ tableGroups view =
 
 tableGroup : NodeGroup -> Html Msg
 tableGroup group =
-    label [ class "label label-rounded mx-2" ]
+    span [ class "chip mx-2" ]
         (group.all |> List.map tableGroupHost)
 
 
 tableGroupHost : String -> Html Msg
 tableGroupHost host =
-    span [ class "c-hand", onClick (ShowNode host) ]
+    span [ class "mx-2 c-hand", onClick (ShowNode host) ]
         [ text host ]
 
 
