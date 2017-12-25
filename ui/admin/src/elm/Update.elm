@@ -210,6 +210,7 @@ update msg model =
         CreateTableReplicaOk ->
             { model
                 | userMsg = Just { contents = "Replica created", severity = SevInfo }
+                , state = NodeTable
             }
                 ! [ fetch_nodes model ]
 

@@ -1,4 +1,4 @@
 app_user: "fullpass"
 app_name: "fullpass"
 app_domain: "fullpass.in"
-remove_data: yes
+remove_data: no 
