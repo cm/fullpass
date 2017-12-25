@@ -181,7 +181,7 @@ add(Node, Tab, Type) ->
 
 add(Node) ->
     case mnesia:change_config(extra_db_nodes, [Node]) of 
-        {ok, Node} -> 
+        {ok, _} -> 
             case mnesia:change_table_copy_type(schema, Node, disc_copies) of
                 {atomic, ok} -> ok;
                 {aborted, R} -> {error, R}
