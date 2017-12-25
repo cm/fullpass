@@ -14,6 +14,15 @@
       file:
         path:  "/home/{{ app_user }}/app/rebar.lock"
         state: absent
+    
+    - name: Remove Mnesia
+      file:
+        path:  "/home/{{ app_user }}/data/mnesia"
+        state: "{{ item }}"
+      with_items:
+        - absent
+        - directory
+      when: remove_data
 
     - name: Fix permissions
       file:

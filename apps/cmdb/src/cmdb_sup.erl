@@ -8,5 +8,4 @@ start_link() ->
   supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
-  {ok, {{one_for_one, 0, 1}, [ cmkit:child_spec(cmdb_server, worker)
-                             ]}}.
+  {ok, {{one_for_one, 0, 1}, []}}.
