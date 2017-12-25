@@ -8,10 +8,9 @@ key() -> delete_table_replica.
 
 do(#{ <<"table">> := Table,
       <<"host">> := Host}, S) ->
-    
-    case {cmkit:node_for_host(Host), cmdb:table_for(Table) } of 
-        {{ok, Node}, {ok, {Tab, _, _}}}  -> 
-            case cmdb:drop(Tab, Node) of
+    case cmdb:table_for(Table) of 
+        {ok, {Tab, _, _}}  -> 
+            case cmcluster:delete_table_replica(Host, Tab) of
                 ok -> 
                     {ok, delete_table_replica, #{}, S};
                 {error, E} ->

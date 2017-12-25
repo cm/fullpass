@@ -79,11 +79,23 @@ update msg model =
                     { model | state = NewTable, newTableData = Just t2 } ! []
 
         ShowNodeTable v t ->
-            { model
-                | state = NodeTable
-                , nodeTable = Just t.name
-            }
-                ! []
+            case v.node |> nodeTable t of
+                Nothing ->
+                    { model
+                        | userMsg =
+                            Just
+                                { contents = "No such table " ++ t
+                                , severity = SevError
+                                }
+                    }
+                        ! []
+
+                Just _ ->
+                    { model
+                        | state = NodeTable
+                        , nodeTable = Just t
+                    }
+                        ! []
 
         OnLoginEmail v ->
             { model | loginData = loginDataWithEmail model.loginData v } ! []
@@ -146,13 +158,9 @@ update msg model =
             }
                 ! [ fetch_nodes model ]
 
-        DeleteTableReplica v t ->
-            let
-                v2 =
-                    { v | state = DeletingReplica }
-            in
-            { model | node = Just v2.node.info.hostname }
-                ! [ deleteTableReplica model.flags model.session v.node.info.hostname t.name ]
+        DeleteTableReplica host table ->
+            { model | state = DeletingTableReplica }
+                ! [ deleteTableReplica model.flags model.session host table ]
 
         DeleteTableReplicaErr e ->
             { model
@@ -162,16 +170,12 @@ update msg model =
                 ! []
 
         DeleteTableReplicaOk ->
-            withNode model
-                (\view ->
-                    { model
-                        | node = Nothing
-                        , state = Nodes
-                    }
-                        ! [ fetch_nodes model ]
-                )
+            { model
+                | state = Node
+            }
+                ! [ fetch_nodes model ]
 
-        AddTableReplica v t ->
+        CreateTableReplica v t ->
             case model.hostname of
                 Nothing ->
                     { contents = "Please select a hostname"
@@ -182,12 +186,8 @@ update msg model =
                 Just h ->
                     case t.name of
                         "schema" ->
-                            let
-                                v2 =
-                                    { v | state = AddingReplica }
-                            in
-                            { model | node = Just v2.node.info.hostname }
-                                ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h "both" ]
+                            { model | state = CreatingTableReplica }
+                                ! [ createSchemaReplica model.flags model.session v.node.info.hostname h ]
 
                         _ ->
                             case model.media of
@@ -198,12 +198,20 @@ update msg model =
                                         |> error model
 
                                 Just m ->
-                                    let
-                                        v2 =
-                                            { v | state = AddingReplica }
-                                    in
-                                    { model | node = Just v2.node.info.hostname }
-                                        ! [ addTableReplica model.flags model.session v.node.info.hostname t.name h m ]
+                                    { model | state = CreatingTableReplica }
+                                        ! [ createTableReplica model.flags model.session v.node.info.hostname t.name h m ]
+
+        CreateTableReplicaErr e ->
+            { model
+                | userMsg = Just e
+            }
+                ! []
+
+        CreateTableReplicaOk ->
+            { model
+                | userMsg = Just { contents = "Replica created", severity = SevInfo }
+            }
+                ! [ fetch_nodes model ]
 
         HostnameSelected h ->
             { model | hostname = Just h } ! []

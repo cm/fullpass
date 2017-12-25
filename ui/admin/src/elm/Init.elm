@@ -363,14 +363,14 @@ tableStorageToString s =
 
 toTableStorage : String -> Maybe TableStorage
 toTableStorage s =
-    case s of
-        "Set" ->
+    case s |> String.toLower of
+        "set" ->
             Just Set
 
-        "Bag" ->
+        "bag" ->
             Just Bag
 
-        "Ordered set" ->
+        "ordered set" ->
             Just OrderedSet
 
         _ ->
@@ -545,3 +545,8 @@ tableNodes t =
     t.copies.disc
         ++ t.copies.mem
         ++ t.copies.both
+
+
+wordsToBytes : Int -> Int
+wordsToBytes w =
+    8 * w

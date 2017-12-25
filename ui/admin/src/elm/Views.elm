@@ -63,6 +63,14 @@ view model =
             "Creating schema ... "
                 |> waitingPage model
 
+        DeletingTableReplica ->
+            "Deleting table replica ... "
+                |> waitingPage model
+
+        CreatingTableReplica ->
+            "Creating table replica ... "
+                |> waitingPage model
+
 
 withSelectedNodeTable : Model -> (NodeView -> TableData -> Html Msg) -> Html Msg
 withSelectedNodeTable model next =
@@ -627,7 +635,7 @@ nodePage model view =
             ]
         , div [ class "columns" ]
             [ div [ class "column col-3" ]
-                [ text "Ip addresses" ]
+                [ text "Addresses" ]
             , div [ class "column col-9" ]
                 (ips node)
             ]
@@ -677,15 +685,14 @@ tableProps table =
 tableReplicas : TableData -> Html Msg
 tableReplicas table =
     div []
-        [ h6 [] [ text "Replicas" ]
-        , tableMediaPane "Memory" table.copies.mem
-        , tableMediaPane "Disc" table.copies.disc
-        , tableMediaPane "Memory and disc" table.copies.both
+        [ tableMediaPane "Memory" table.copies.mem table
+        , tableMediaPane "Disc" table.copies.disc table
+        , tableMediaPane "Memory and disc" table.copies.both table
         ]
 
 
-tableMediaPane : String -> List String -> Html Msg
-tableMediaPane title hostnames =
+tableMediaPane : String -> List String -> TableData -> Html Msg
+tableMediaPane title hostnames t =
     case hostnames of
         [] ->
             div [] []
@@ -697,8 +704,17 @@ tableMediaPane title hostnames =
                 , div []
                     (List.map
                         (\name ->
-                            label [ class "label label-rounded mx-2" ]
-                                [ text name ]
+                            span [ class "chip mx-2" ]
+                                [ span [] [ text name ]
+
+                                --, a
+                                --    [ class "btn btn-clear"
+                                --    , attribute "aria-label" "Close"
+                                --    , attribute "role" "button"
+                                --    , onClick (DeleteTableReplica name t.name)
+                                --    ]
+                                --    []
+                                ]
                         )
                         hostnames
                     )
@@ -709,11 +725,51 @@ nodeTablePage : Model -> NodeView -> TableData -> Html Msg
 nodeTablePage model view table =
     div []
         [ h4 []
-            (text table.name
-                :: tableProps table
-            )
-        , tableReplicas table
-        , tableReplica model view table
+            [ text table.name
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Type" ]
+            , div [ class "column col-9" ]
+                [ case table.kind |> toTableStorage of
+                    Nothing ->
+                        "Unknown" |> text
+
+                    Just s ->
+                        s |> tableStorageToString |> text
+                ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Size" ]
+            , div [ class "column col-9" ]
+                [ (toString table.size.count
+                    ++ " entries, "
+                    ++ (table.size.words |> wordsToBytes |> toString)
+                    ++ " bytes"
+                  )
+                    |> text
+                ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                [ text "Replicas" ]
+            , div [ class "column col-9" ]
+                [ tableReplicas table
+                ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                []
+            , div [ class "column col-9" ]
+                [ tableAddReplicaPane model view table ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
+                []
+            , div [ class "column col-9" ]
+                [ tableReplicaDeleteButton view table ]
+            ]
         ]
         |> sidebarLayout2 model
 
@@ -721,31 +777,6 @@ nodeTablePage model view table =
 onChange : (String -> msg) -> Html.Attribute msg
 onChange tagger =
     on "change" (Json.map tagger Html.Events.targetValue)
-
-
-tableReplica : Model -> NodeView -> TableData -> Html Msg
-tableReplica model view table =
-    case view.state of
-        Idle ->
-            div [ class "mt-2" ]
-                [ tableAddReplicaPane model view table
-                , tableDeletePane view table
-                ]
-
-        AddingReplica ->
-            div [ class "mt-2" ]
-                [ div [ class "d-inline-flex" ]
-                    [ text "Adding replica..." ]
-                , div [ class "mx-2 d-inline-flex loading" ] []
-                ]
-
-        DeletingReplica ->
-            div [ class "mt-2" ]
-                [ div [ class "d-inline-flex" ]
-                    [ text "Deleting replica..."
-                    ]
-                , div [ class "mx-2 d-inline-flex loading" ] []
-                ]
 
 
 tableStorageSelect : TableStorage -> (String -> Msg) -> Html Msg
@@ -807,13 +838,7 @@ tableAddReplicaPane model view table =
                         ]
 
                 _ ->
-                    select [ class "mt-2 form-select", onChange MediaSelected ]
-                        (List.map
-                            (\name ->
-                                option [] [ text name ]
-                            )
-                            [ "Disc", "Memory", "Memory and disc" ]
-                        )
+                    tableMediaSelect model MediaSelected
 
         buttonStyle =
             case table.name of
@@ -835,7 +860,9 @@ tableAddReplicaPane model view table =
     in
     case view.node.cluster.peers of
         [] ->
-            div [] []
+            span [ class "text-secondary" ]
+                [ text "Not enough peers node available for new replicas"
+                ]
 
         _ ->
             div []
@@ -843,32 +870,26 @@ tableAddReplicaPane model view table =
                 , mediaSelection
                 , button
                     [ class ("mt-2 btn btn-primary " ++ buttonStyle)
-                    , style [ ( "width", "100%" ) ]
-                    , onClick (AddTableReplica view table)
+                    , onClick (CreateTableReplica view table)
                     ]
                     [ text "Add replica" ]
                 ]
 
 
-tableDeletePane : NodeView -> TableData -> Html Msg
-tableDeletePane view table =
-    let
-        ( title, action ) =
-            case table.name of
-                "schema" ->
-                    ( "Delete entire schema", DeleteSchema view )
+tableReplicaDeleteButton : NodeView -> TableData -> Html Msg
+tableReplicaDeleteButton view table =
+    case table.name of
+        "schema" ->
+            div [] []
 
-                _ ->
-                    ( "Delete this replica", DeleteTableReplica view table )
-    in
-    div []
-        [ button
-            [ class "btn btn-error"
-            , style [ ( "width", "100%" ) ]
-            , onClick action
-            ]
-            [ text title ]
-        ]
+        _ ->
+            div []
+                [ button
+                    [ class "btn btn-error"
+                    , onClick (DeleteTableReplica view.node.info.hostname table.name)
+                    ]
+                    [ text "Delete this replica" ]
+                ]
 
 
 nodeResources : NodeData -> Html Msg
@@ -931,7 +952,11 @@ nodeSchemaActions view =
                 pButton "Create schema" (CreateSchema view)
 
             False ->
-                eButton "Delete schema" (DeleteSchema view)
+                div []
+                    [ eButton "Delete schema" (DeleteSchema view)
+                    , span [ class "mx-1" ] []
+                    , dButton "Edit schema ..." (ShowNodeTable view "schema")
+                    ]
         ]
 
 
@@ -1031,7 +1056,7 @@ dbTable model view table =
             [ tableColor |> statusCircle "16px"
             ]
         , td []
-            [ a [ href "#", onClick (ShowNodeTable view table) ]
+            [ a [ href "#", onClick (ShowNodeTable view table.name) ]
                 [ text table.name ]
             ]
         ]

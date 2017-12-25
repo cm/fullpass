@@ -63,6 +63,14 @@ actionErrorDecoder action =
             Decode.map DeleteTableReplicaErr
                 (field "data" errorDecoder)
 
+        "create_table_replica" ->
+            Decode.map CreateTableReplicaErr
+                (field "data" errorDecoder)
+
+        "create_schema_replica" ->
+            Decode.map CreateTableReplicaErr
+                (field "data" errorDecoder)
+
         "delete_schema" ->
             Decode.map DeleteSchemaErr
                 (field "data" errorDecoder)
@@ -128,6 +136,12 @@ actionOkDecoder action =
 
         "delete_table_replica" ->
             Decode.succeed DeleteTableReplicaOk
+
+        "create_table_replica" ->
+            Decode.succeed CreateTableReplicaOk
+
+        "create_schema_replica" ->
+            Decode.succeed CreateTableReplicaOk
 
         "delete_schema" ->
             Decode.succeed DeleteSchemaOk

@@ -20,6 +20,8 @@ type State
     | Node
     | NodeTable
     | CreatingTable
+    | CreatingTableReplica
+    | DeletingTableReplica
     | CreatingSchema
     | DeletingSchema
 

@@ -23,7 +23,7 @@ type Msg
     | ShowTables
     | ShowNewTable
     | ShowTable TableView
-    | ShowNodeTable NodeView TableData
+    | ShowNodeTable NodeView String
     | OnLoginEmail String
     | OnLoginPassword String
     | LoginErr UserMsg
@@ -32,13 +32,15 @@ type Msg
     | LogoutOk
     | LogoutErr UserMsg
     | NodeList (List NodeData)
-    | DeleteTableReplica NodeView TableData
+    | DeleteTableReplica String String
     | DeleteTableReplicaErr UserMsg
     | DeleteTableReplicaOk
     | DeleteSchema NodeView
     | DeleteSchemaErr UserMsg
     | DeleteSchemaOk
-    | AddTableReplica NodeView TableData
+    | CreateTableReplica NodeView TableData
+    | CreateTableReplicaOk
+    | CreateTableReplicaErr UserMsg
     | HostnameSelected String
     | MediaSelected String
     | NewTableNameChanged String

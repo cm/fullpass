@@ -82,16 +82,28 @@ encodeCreateSchema session hostname =
         )
 
 
-encodeAddReplica : String -> String -> String -> String -> String -> String
-encodeAddReplica session hostname tablename peer media =
+encodeCreateTableReplica : String -> String -> String -> String -> String -> String
+encodeCreateTableReplica session hostname tablename peer media =
     Encode.encode 0
         (Encode.object
-            [ ( "action", Encode.string "add_table_replica" )
+            [ ( "action", Encode.string "create_table_replica" )
             , ( "session", Encode.string session )
             , ( "host", Encode.string hostname )
             , ( "table", Encode.string tablename )
             , ( "peer", Encode.string peer )
             , ( "media", Encode.string media )
+            ]
+        )
+
+
+encodeCreateSchemaReplica : String -> String -> String -> String
+encodeCreateSchemaReplica session hostname peer =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "create_schema_replica" )
+            , ( "session", Encode.string session )
+            , ( "host", Encode.string hostname )
+            , ( "peer", Encode.string peer )
             ]
         )
 

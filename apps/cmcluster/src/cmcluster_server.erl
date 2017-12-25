@@ -49,7 +49,20 @@ red({call, From}, drop_schema, Data) ->
 
 red({call, From}, create_schema, Data) ->
     Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+red({call, From}, {create_schema_replica, Node}, Data) ->
+    Res = create_schema_replica(Node),
+    {keep_state, Data, {reply, From, Res}};
+
+red({call, From}, {create_table_replica, Node, Tab, Media}, Data) ->
+    Res = create_table_replica(Node, Tab, Media),
+    {keep_state, Data, {reply, From, Res}};
+
+red({call, From}, {delete_table_replica, Node, Tab}, Data) ->
+    Res = delete_table_replica(Node, Tab),
     {keep_state, Data, {reply, From, Res}}.
+
 
 yellow(info, {nodeup, Node}, Data) ->
     State = state(),
@@ -72,6 +85,18 @@ yellow({call, From}, drop_schema, Data) ->
 
 yellow({call, From}, create_schema, Data) ->
     Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+yellow({call, From}, {create_schema_replica, Node}, Data) ->
+    Res = create_schema_replica(Node),
+    {keep_state, Data, {reply, From, Res}};
+
+yellow({call, From}, {create_table_replica, Node, Tab, Media}, Data) ->
+    Res = create_table_replica(Node, Tab, Media),
+    {keep_state, Data, {reply, From, Res}};
+
+yellow({call, From}, {delete_table_replica, Node, Tab}, Data) ->
+    Res = delete_table_replica(Node, Tab),
     {keep_state, Data, {reply, From, Res}}.
 
 green(info, {nodeup, Node}, Data) ->
@@ -95,6 +120,18 @@ green({call, From}, drop_schema, Data) ->
 
 green({call, From}, create_schema, Data) ->
     Res= create_schema(),
+    {keep_state, Data, {reply, From, Res}};
+
+green({call, From}, {create_schema_replica, Node}, Data) ->
+    Res = create_schema_replica(Node),
+    {keep_state, Data, {reply, From, Res}};
+
+green({call, From}, {create_table_replica, Node, Tab, Media}, Data) ->
+    Res = create_table_replica(Node, Tab, Media),
+    {keep_state, Data, {reply, From, Res}};
+
+green({call, From}, {delete_table_replica, Node, Tab}, Data) ->
+    Res = delete_table_replica(Node, Tab),
     {keep_state, Data, {reply, From, Res}}.
 
 join(green) ->
@@ -156,3 +193,18 @@ drop_schema() ->
 
 create_schema() -> 
     cmdb:create_schema(node()).
+
+create_table_replica(Node, Tab, Type) ->
+    MnesiaType = table_copies_for(Type),
+    cmdb:create_table_replica(Node, Tab, MnesiaType).
+
+delete_table_replica(Node, Tab) -> 
+    cmdb:delete_table_replica(Node, Tab).
+
+create_schema_replica(Node) ->
+    cmdb:create_schema_replica(Node).
+
+
+table_copies_for(disc) -> disc_only_copies;
+table_copies_for(memory) -> ram_copies;
+table_copies_for(both) -> disc_copies.
