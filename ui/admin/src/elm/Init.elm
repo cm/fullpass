@@ -162,20 +162,35 @@ indexedTables model nodes =
                         \j ->
                             let
                                 view =
-                                    case Dict.get t.name j of
+                                    case Dict.get t.info.name j of
                                         Nothing ->
                                             tableView t n
 
                                         Just v ->
                                             tableViewWithNode v t n
                             in
-                            Dict.insert t.name view j
+                            Dict.insert t.info.name view j
                     )
                     i
                     n.db.tables
         )
-        Dict.empty
+        model.tables
         nodes
+
+
+indexedTableDefinitions : Model -> List TableInfo -> Dict String TableView
+indexedTableDefinitions model tables =
+    List.foldl
+        (\t ->
+            \i ->
+                let
+                    v =
+                        tableViewFromInfo t
+                in
+                Dict.insert t.name v i
+        )
+        Dict.empty
+        tables
 
 
 nodeTable : String -> NodeData -> Maybe TableData
@@ -183,14 +198,14 @@ nodeTable name node =
     node.db.tables
         |> List.filter
             (\t ->
-                t.name == name
+                t.info.name == name
             )
         |> List.head
 
 
 tableGroup : TableData -> NodeData -> Maybe NodeGroup
 tableGroup table node =
-    case nodeTable table.name node of
+    case nodeTable table.info.name node of
         Nothing ->
             Nothing
 
@@ -245,6 +260,24 @@ tableViewWithNode view t n =
     { view | groups = groups2 }
 
 
+tableViewFromInfo : TableInfo -> TableView
+tableViewFromInfo d =
+    { table =
+        { info = d
+        , size =
+            { count = 0
+            , words = 0
+            }
+        , copies =
+            { disc = []
+            , mem = []
+            , both = []
+            }
+        }
+    , groups = Dict.empty
+    }
+
+
 groups : TableView -> List NodeGroup
 groups v =
     v.groups
@@ -258,7 +291,7 @@ compareNodeByName n1 n2 =
 
 tableByName : TableView -> TableView -> Order
 tableByName n1 n2 =
-    compare n1.table.name n2.table.name
+    compare n1.table.info.name n2.table.info.name
 
 
 nodes : Model -> List NodeView
@@ -502,7 +535,7 @@ hasEmptySchema : NodeData -> Bool
 hasEmptySchema node =
     case node.db.tables of
         [ s ] ->
-            case ( s.name, s.size.count, s.copies.disc, s.copies.both, s.copies.mem ) of
+            case ( s.info.name, s.size.count, s.copies.disc, s.copies.both, s.copies.mem ) of
                 ( "schema", 1, [], [], [ host ] ) ->
                     True
 

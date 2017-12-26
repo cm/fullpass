@@ -31,6 +31,8 @@ type Msg
     | Logout
     | LogoutOk
     | LogoutErr UserMsg
+    | FetchTablesErr UserMsg
+    | FetchTablesOk (List TableInfo)
     | NodeList (List NodeData)
     | DeleteTableReplica String String
     | DeleteTableReplicaErr UserMsg

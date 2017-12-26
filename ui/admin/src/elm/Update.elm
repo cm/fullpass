@@ -108,11 +108,11 @@ update msg model =
 
         LoginOk u ->
             { model
-                | state = Nodes
+                | state = FetchingTables
                 , loginData = newLoginData
                 , user = Just u
             }
-                ! [ fetch_nodes model ]
+                ! [ fetchTables model ]
 
         LoginErr e ->
             e |> error model
@@ -129,6 +129,16 @@ update msg model =
                 |> update (ConnectOk model.session)
 
         LogoutErr e ->
+            e |> error model
+
+        FetchTablesOk tables ->
+            { model
+                | state = Nodes
+                , tables = indexedTableDefinitions model tables
+            }
+                ! [ fetch_nodes model ]
+
+        FetchTablesErr e ->
             e |> error model
 
         NodeList nodes ->
@@ -184,7 +194,7 @@ update msg model =
                         |> error model
 
                 Just h ->
-                    case t.name of
+                    case t.info.name of
                         "schema" ->
                             { model | state = CreatingTableReplica }
                                 ! [ createSchemaReplica model.flags model.session v.node.info.hostname h ]
@@ -199,7 +209,7 @@ update msg model =
 
                                 Just m ->
                                     { model | state = CreatingTableReplica }
-                                        ! [ createTableReplica model.flags model.session v.node.info.hostname t.name h m ]
+                                        ! [ createTableReplica model.flags model.session v.node.info.hostname t.info.name h m ]
 
         CreateTableReplicaErr e ->
             { model

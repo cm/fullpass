@@ -13,6 +13,7 @@ type alias Flags =
 
 type State
     = SignedOut
+    | FetchingTables
     | Tables
     | NewTable
     | Table
@@ -102,10 +103,15 @@ type alias DbData =
     }
 
 
-type alias TableData =
-    { id : String
-    , name : String
+type alias TableInfo =
+    { name : String
     , kind : String
+    , media : String
+    }
+
+
+type alias TableData =
+    { info : TableInfo
     , size : TableSizeData
     , copies : TableCopiesData
     }

@@ -1,5 +1,6 @@
 module Decoders exposing (..)
 
+import Init exposing (..)
 import Json.Decode as Decode exposing (..)
 import Messages exposing (..)
 import Models exposing (..)
@@ -79,6 +80,10 @@ actionErrorDecoder action =
             Decode.map CreateSchemaErr
                 (field "data" errorDecoder)
 
+        "cluster_tables" ->
+            Decode.map FetchTablesErr
+                (field "data" errorDecoder)
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding error")
                 |> Decode.fail
@@ -130,6 +135,10 @@ actionOkDecoder action =
         "nodes" ->
             Decode.map NodeList
                 (field "data" nodesDecoder)
+
+        "cluster_tables" ->
+            Decode.map FetchTablesOk
+                (field "data" (tableInfoDecoder |> Decode.list))
 
         "create_table" ->
             Decode.succeed CreateTableOk
@@ -193,6 +202,14 @@ nodeDecoder =
         (field "db" dbDataDecoder)
 
 
+tableInfoDecoder : Decoder TableInfo
+tableInfoDecoder =
+    Decode.map3 TableInfo
+        (field "name" Decode.string)
+        (field "type" Decode.string)
+        (field "media" Decode.string)
+
+
 infoDataDecoder : Decoder InfoData
 infoDataDecoder =
     Decode.map2 InfoData
@@ -216,10 +233,8 @@ dbDataDecoder =
 
 tableDataDecoder : Decoder TableData
 tableDataDecoder =
-    Decode.map5 TableData
-        (field "id" Decode.string)
-        (field "name" Decode.string)
-        (field "type" Decode.string)
+    Decode.map3 TableData
+        (field "info" tableInfoDecoder)
         (field "size" tableSizeDecoder)
         (field "copies" tableCopiesDecoder)
 

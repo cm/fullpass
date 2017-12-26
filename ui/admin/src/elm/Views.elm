@@ -71,6 +71,10 @@ view model =
             "Creating table replica ... "
                 |> waitingPage model
 
+        FetchingTables ->
+            "Fetching tables ... "
+                |> waitingPage model
+
 
 withSelectedNodeTable : Model -> (NodeView -> TableData -> Html Msg) -> Html Msg
 withSelectedNodeTable model next =
@@ -313,7 +317,7 @@ tableBreadcrumb view =
                 [ text "Tables" ]
             ]
         , li [ class "breadcrumb-item" ]
-            [ text view.table.name
+            [ text view.table.info.name
             ]
         ]
 
@@ -504,7 +508,7 @@ tablesPage model =
 tablePage : Model -> TableView -> Html Msg
 tablePage model t =
     div []
-        [ t.table.name |> text
+        [ t.table.info.name |> text
         ]
         |> sidebarLayout2 model
 
@@ -569,25 +573,54 @@ newTableStatusColor model data =
 
 tableRow : TableView -> Html Msg
 tableRow view =
+    let
+        tGroups =
+            groups view
+    in
+    case tGroups |> List.length of
+        0 ->
+            inactiveTableRow view tGroups
+
+        _ ->
+            activeTableRow view tGroups
+
+
+activeTableRow : TableView -> List NodeGroup -> Html Msg
+activeTableRow view groups =
     tr []
         [ td [ style [ ( "width", "40px" ) ] ]
             [ view |> tableStatusColor |> statusCircle "28px"
             ]
         , td []
             [ button [ class "btn btn-link", onClick (ShowTable view) ]
-                [ text view.table.name
+                [ text view.table.info.name
                 ]
             ]
         , td []
-            [ tableGroups view
+            [ tableGroups groups
             ]
         ]
 
 
-tableGroups : TableView -> Html Msg
-tableGroups view =
+inactiveTableRow : TableView -> List NodeGroup -> Html Msg
+inactiveTableRow view groups =
+    tr []
+        [ td [ style [ ( "width", "40px" ) ] ]
+            [ "gray" |> statusCircle "28px"
+            ]
+        , td []
+            [ span [ class "text-secondary" ]
+                [ text view.table.info.name ]
+            ]
+        , td []
+            []
+        ]
+
+
+tableGroups : List NodeGroup -> Html Msg
+tableGroups groups =
     div []
-        (groups view
+        (groups
             |> List.map tableGroup
         )
 
@@ -673,7 +706,7 @@ tableProps table =
         [ class "mx-2 label label-rounded"
         , style [ ( "font-size", "14px" ) ]
         ]
-        [ table.kind |> text ]
+        [ table.info.kind |> text ]
     , label
         [ class "label label-rounded"
         , style [ ( "font-size", "14px" ) ]
@@ -725,13 +758,13 @@ nodeTablePage : Model -> NodeView -> TableData -> Html Msg
 nodeTablePage model view table =
     div []
         [ h4 []
-            [ text table.name
+            [ text table.info.name
             ]
         , div [ class "columns mt-2" ]
             [ div [ class "column col-3" ]
                 [ text "Type" ]
             , div [ class "column col-9" ]
-                [ case table.kind |> toTableStorage of
+                [ case table.info.kind |> toTableStorage of
                     Nothing ->
                         "Unknown" |> text
 
@@ -830,7 +863,7 @@ tableAddReplicaPane model view table =
                         )
 
         mediaSelection =
-            case table.name of
+            case table.info.name of
                 "schema" ->
                     div [ class "mt-2" ]
                         [ text "Media: "
@@ -841,7 +874,7 @@ tableAddReplicaPane model view table =
                     tableMediaSelect model MediaSelected
 
         buttonStyle =
-            case table.name of
+            case table.info.name of
                 "schema" ->
                     case model.hostname of
                         Nothing ->
@@ -878,7 +911,7 @@ tableAddReplicaPane model view table =
 
 tableReplicaDeleteButton : NodeView -> TableData -> Html Msg
 tableReplicaDeleteButton view table =
-    case table.name of
+    case table.info.name of
         "schema" ->
             div [] []
 
@@ -886,7 +919,7 @@ tableReplicaDeleteButton view table =
             div []
                 [ button
                     [ class "btn btn-error"
-                    , onClick (DeleteTableReplica view.node.info.hostname table.name)
+                    , onClick (DeleteTableReplica view.node.info.hostname table.info.name)
                     ]
                     [ text "Delete this replica" ]
                 ]
@@ -995,7 +1028,7 @@ nodeTables model view =
             view.node.db.tables
                 |> List.filter
                     (\t ->
-                        t.name /= "schema"
+                        t.info.name /= "schema"
                     )
     in
     case userTables of
@@ -1041,7 +1074,7 @@ dbTable : Model -> NodeView -> TableData -> Html Msg
 dbTable model view table =
     let
         tableView =
-            table.name |> tableForName model
+            table.info.name |> tableForName model
 
         tableColor =
             case tableView of
@@ -1056,8 +1089,8 @@ dbTable model view table =
             [ tableColor |> statusCircle "16px"
             ]
         , td []
-            [ a [ href "#", onClick (ShowNodeTable view table.name) ]
-                [ text table.name ]
+            [ a [ href "#", onClick (ShowNodeTable view table.info.name) ]
+                [ text table.info.name ]
             ]
         ]
 

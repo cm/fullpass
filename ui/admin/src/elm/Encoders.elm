@@ -48,6 +48,16 @@ encodeNodes session =
         )
 
 
+encodeFetchTables : String -> String
+encodeFetchTables session =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "cluster_tables" )
+            , ( "session", Encode.string session )
+            ]
+        )
+
+
 encodeDeleteTableReplica : String -> String -> String -> String
 encodeDeleteTableReplica session hostname tablename =
     Encode.encode 0
