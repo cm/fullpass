@@ -20,7 +20,12 @@ create_table_replica(Host, Tab, TargetHost, Media) ->
     end.
 
 delete_table_replica(Host, Tab) ->
-    do_in_host(Host, {delete_table_replica, Tab}).
+    case cmkit:node_for_host(Host) of
+        {ok, Node}  ->
+            gen_statem:call({cmcluster_server, Node}, {delete_table_replica, Node, Tab});
+        _ ->
+            {error, invalid}
+    end.
 
 create_schema_replica(Host, TargetHost) ->
     case cmkit:node_for_host(TargetHost) of
