@@ -208,8 +208,16 @@ update msg model =
                                         |> error model
 
                                 Just m ->
-                                    { model | state = CreatingTableReplica }
-                                        ! [ createTableReplica model.flags model.session v.node.info.hostname t.info.name h m ]
+                                    case m |> stringToTableMedia of
+                                        Nothing ->
+                                            { contents = "Invalid table media"
+                                            , severity = SevError
+                                            }
+                                                |> error model
+
+                                        Just media ->
+                                            { model | state = CreatingTableReplica }
+                                                ! [ createTableReplica model.flags model.session v.node.info.hostname t.info.name h (tableMediaToId media) ]
 
         CreateTableReplicaErr e ->
             { model

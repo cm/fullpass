@@ -459,6 +459,19 @@ tableMediaToString m =
             "Memory and disc"
 
 
+tableMediaToId : TableMedia -> String
+tableMediaToId m =
+    case m of
+        Disc ->
+            "disc"
+
+        Memory ->
+            "memory"
+
+        Both ->
+            "both"
+
+
 newTableReplicas : NewTableData -> List TableReplicaData
 newTableReplicas d =
     d.replicas
