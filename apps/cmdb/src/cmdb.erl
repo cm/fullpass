@@ -185,7 +185,10 @@ exists(TableName) ->
    lists:member(TableName,Tables).
 
 add(Node, Tab, Type) ->
-    mnesia:add_table_copy(Tab, Node, Type).
+    case mnesia:add_table_copy(Tab, Node, Type) of
+        {atomic, ok} -> ok;
+        {aborted, R} -> {error, R}
+    end.
 
 add(Node) ->
     case mnesia:change_config(extra_db_nodes, [Node]) of 
