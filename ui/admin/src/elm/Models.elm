@@ -174,6 +174,11 @@ type alias MemData =
     }
 
 
+type alias HostData =
+    { name : String
+    }
+
+
 type alias Model =
     { flags : Flags
     , loginData : LoginData

@@ -158,6 +158,14 @@ actionOkDecoder action =
         "create_schema" ->
             Decode.succeed CreateSchemaOk
 
+        "stop_db" ->
+            Decode.map StopNodeDbOk
+                (field "data" hostDecoder)
+
+        "start_db" ->
+            Decode.map StartNodeDbOk
+                (field "data" hostDecoder)
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding ok")
                 |> Decode.fail
@@ -284,3 +292,9 @@ memDataDecoder =
     Decode.map2 MemData
         (field "free_memory" Decode.int)
         (field "total_memory" Decode.int)
+
+
+hostDecoder : Decoder HostData
+hostDecoder =
+    Decode.map HostData
+        (field "host" Decode.string)

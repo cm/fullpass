@@ -57,3 +57,6 @@ type Msg
     | CreateTable
     | CreateTableErr UserMsg
     | CreateTableOk
+    | ToggleNodeDb NodeData
+    | StartNodeDbOk HostData
+    | StopNodeDbOk HostData

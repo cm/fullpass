@@ -18,9 +18,11 @@ all_nodes() ->
 init([]) ->
     net_kernel:monitor_nodes(true),
     net_adm:world(),
+    cmdb:subscribe(),
     case length(expected_nodes()) of
         1 -> 
             cmkit:log({cmcluster, green, standalone}),
+            
             {ok, green, #data{}};
         _ -> 
             {ok, red, #data{}}
@@ -36,9 +38,21 @@ red(info, {nodedown, Node}, Data) ->
     cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
+red(info, {mnesia_system_event, E}, Data) ->
+    cmcluster:log(E),
+    {next_state, red, Data};
+
 red({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
     {keep_state, Data, {reply, From, Nodes}};
+
+red({call, From}, stop_db, Data) ->
+    Res= stop_db(),
+    {keep_state, Data, {reply, From, Res}};
+
+red({call, From}, start_db, Data) ->
+    Res= start_db(),
+    {keep_state, Data, {reply, From, Res}};
 
 red({call, From}, drop_schema, Data) ->
     Res= drop_schema(),
@@ -71,9 +85,21 @@ yellow(info, {nodedown, Node}, Data) ->
     cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
+yellow(info, {mnesia_system_event, E}, Data) ->
+    cluster:log(E),
+    {next_state, yellow, Data};
+
 yellow({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
     {keep_state, Data, {reply, From, Nodes}};
+
+yellow({call, From}, stop_db, Data) ->
+    Res= stop_db(),
+    {keep_state, Data, {reply, From, Res}};
+
+yellow({call, From}, start_db, Data) ->
+    Res= start_db(),
+    {keep_state, Data, {reply, From, Res}};
 
 yellow({call, From}, drop_schema, Data) ->
     Res= drop_schema(),
@@ -105,9 +131,21 @@ green(info, {nodedown, Node}, Data) ->
     cmkit:log({cmcluster, State, nodedown, Node}),
     {next_state, State, Data};
 
+green(info, {mnesia_system_event, E}, Data) ->
+    cmcluster:log(E),
+    {next_state, green, Data};
+
 green({call, From}, nodes, Data) ->
     Nodes = info(nodes, nothing),
     {keep_state, Data, {reply, From, Nodes}};
+
+green({call, From}, stop_db, Data) ->
+    Res= stop_db(),
+    {keep_state, Data, {reply, From, Res}};
+
+green({call, From}, start_db, Data) ->
+    Res= start_db(),
+    {keep_state, Data, {reply, From, Res}};
 
 green({call, From}, drop_schema, Data) ->
     Res= drop_schema(),
@@ -169,6 +207,12 @@ info(nodes, _) ->
                  tables => cmdb:tables_info()
                }
      }.
+
+stop_db() -> 
+    cmdb:stop().
+
+start_db() -> 
+    cmdb:start().
 
 drop_schema() -> 
     cmdb:drop_schema(node()).

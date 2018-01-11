@@ -165,3 +165,25 @@ encodeCreateTable session data =
             , ( "both", encodeNewTableReplicas Both data.replicas )
             ]
         )
+
+
+encodeStartDb : String -> String -> String
+encodeStartDb session host =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "start_db" )
+            , ( "host", Encode.string host )
+            , ( "session", Encode.string session )
+            ]
+        )
+
+
+encodeStopDb : String -> String -> String
+encodeStopDb session host =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "stop_db" )
+            , ( "host", Encode.string host )
+            , ( "session", Encode.string session )
+            ]
+        )

@@ -344,6 +344,28 @@ update msg model =
             }
                 ! [ fetch_nodes model ]
 
+        ToggleNodeDb n ->
+            case n.db.started of
+                True ->
+                    model ! [ stopDb model.flags model.session n.info.hostname ]
+
+                False ->
+                    model ! [ startDb model.flags model.session n.info.hostname ]
+
+        StartNodeDbOk h ->
+            { model
+                | state = Node
+                , userMsg = Just (infoMsg "Database started")
+            }
+                ! [ fetch_nodes model ]
+
+        StopNodeDbOk h ->
+            { model
+                | state = Node
+                , userMsg = Just (infoMsg "Database stopped")
+            }
+                ! [ fetch_nodes model ]
+
 
 withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 withNewTableData model next =

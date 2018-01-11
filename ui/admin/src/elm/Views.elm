@@ -381,7 +381,21 @@ nodeRow view =
                 [ text view.node.info.hostname
                 ]
             ]
+        , td []
+            [ nodeDbStateLabel view.node ]
         ]
+
+
+nodeDbStateLabel : NodeData -> Html Msg
+nodeDbStateLabel node =
+    case node.db.started of
+        True ->
+            span [ class "chip mx-2" ]
+                [ text "Database online" ]
+
+        False ->
+            span [ class "chip mx-2" ]
+                [ text "Database offline" ]
 
 
 waitingPage : Model -> String -> Html Msg
@@ -686,6 +700,12 @@ nodePage model view =
             ]
         , div [ class "columns mt-2" ]
             [ div [ class "column col-3" ]
+                [ text "Database" ]
+            , div [ class "column col-9" ]
+                [ node |> nodeDbSwitch ]
+            ]
+        , div [ class "columns mt-2" ]
+            [ div [ class "column col-3" ]
                 [ text "Schema" ]
             , div [ class "column col-9" ]
                 [ view |> nodeSchema model ]
@@ -935,10 +955,16 @@ nodeResources node =
 
 nodeSchema : Model -> NodeView -> Html Msg
 nodeSchema model view =
-    div []
-        [ nodeSchemaReplicas model view
-        , nodeSchemaActions view
-        ]
+    case view.node.db.started of
+        True ->
+            div []
+                [ nodeSchemaReplicas model view
+                , nodeSchemaActions view
+                ]
+
+        False ->
+            span [ class "text-secondary" ]
+                [ text "Database is stopped" ]
 
 
 nodeSchemaReplicas : Model -> NodeView -> Html Msg
@@ -993,6 +1019,11 @@ nodeSchemaActions view =
         ]
 
 
+nodeDbSwitch : NodeData -> Html Msg
+nodeDbSwitch node =
+    fSwitch "" node.db.started (ToggleNodeDb node)
+
+
 nodePeers : NodeData -> Html Msg
 nodePeers node =
     let
@@ -1031,18 +1062,24 @@ nodeTables model view =
                         t.info.name /= "schema"
                     )
     in
-    case userTables of
-        [] ->
-            span [] [ text "No tables yet" ]
+    case view.node.db.started of
+        False ->
+            span [ class "text-secondary" ]
+                [ text "Database is stopped" ]
 
-        _ ->
-            table [ class "mt-2 table table-striped table-hover" ]
-                [ tbody []
-                    (List.map
-                        (dbTable model view)
-                        userTables
-                    )
-                ]
+        True ->
+            case userTables of
+                [] ->
+                    span [] [ text "No tables yet" ]
+
+                _ ->
+                    table [ class "mt-2 table table-striped table-hover" ]
+                        [ tbody []
+                            (List.map
+                                (dbTable model view)
+                                userTables
+                            )
+                        ]
 
 
 healthSummary : NodeData -> Html Msg
@@ -1241,6 +1278,17 @@ fLabel : String -> Html Msg
 fLabel title =
     label [ class "form-label" ]
         [ text title ]
+
+
+fSwitch : String -> Bool -> Msg -> Html Msg
+fSwitch title isChecked action =
+    label [ class "form-switch", onClick action ]
+        [ input [ type_ "checkbox", checked isChecked ]
+            []
+        , i [ class "form-icon", onClick action ]
+            []
+        , text title
+        ]
 
 
 pButton : String -> Msg -> Html Msg
