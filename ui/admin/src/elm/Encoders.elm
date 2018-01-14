@@ -131,25 +131,18 @@ encodeTableStorage s =
             "ordered_set"
 
 
-encodeNewTableReplicas : TableMedia -> Dict String TableReplicaData -> Encode.Value
-encodeNewTableReplicas media replicas =
-    let
-        nodes =
+encodeNewTableReplicas : TableMedia -> TableMedia -> Dict String TableReplicaData -> Encode.Value
+encodeNewTableReplicas media definedMedia replicas =
+    case media == definedMedia of
+        False ->
+            Encode.list []
+
+        True ->
             replicas
                 |> Dict.values
-                |> List.foldl
-                    (\r ->
-                        \n ->
-                            case r.media == media of
-                                True ->
-                                    r.node :: n
-
-                                False ->
-                                    n
-                    )
-                    []
-    in
-    nodes |> List.map Encode.string |> Encode.list
+                |> List.map (\r -> r.node)
+                |> List.map Encode.string
+                |> Encode.list
 
 
 encodeCreateTable : String -> NewTableData -> String
@@ -160,9 +153,9 @@ encodeCreateTable session data =
             , ( "session", Encode.string session )
             , ( "name", Encode.string data.name )
             , ( "type", data.storage |> encodeTableStorage |> Encode.string )
-            , ( "memory", encodeNewTableReplicas Memory data.replicas )
-            , ( "disc", encodeNewTableReplicas Disc data.replicas )
-            , ( "both", encodeNewTableReplicas Both data.replicas )
+            , ( "memory", encodeNewTableReplicas Memory data.media data.replicas )
+            , ( "disc", encodeNewTableReplicas Disc data.media data.replicas )
+            , ( "both", encodeNewTableReplicas Both data.media data.replicas )
             ]
         )
 

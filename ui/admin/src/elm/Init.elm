@@ -195,6 +195,17 @@ indexedTableDefinitions model tables =
         tables
 
 
+tableNames : Model -> List String
+tableNames model =
+    model.tables
+        |> Dict.values
+        |> List.sortWith tableByName
+        |> List.map
+            (\v ->
+                v.table.info.name
+            )
+
+
 nodeTable : String -> NodeData -> Maybe TableData
 nodeTable name node =
     node.db.tables
@@ -354,22 +365,27 @@ cpu node =
 
 newDummyTableReplica : Dict String TableReplicaData
 newDummyTableReplica =
-    Dict.insert "node1" { node = "node1", media = Both } Dict.empty
+    Dict.insert "node1" { node = "node1" } Dict.empty
 
 
 newTableData : NewTableData
 newTableData =
     { name = ""
     , storage = defaultTableStorage
+    , media = defaultTableMedia
     , replicas = Dict.empty
     }
 
 
-modelWithNewTableName : Model -> NewTableData -> String -> Model
-modelWithNewTableName model d v =
+modelWithNewTable : Model -> NewTableData -> String -> TableStorage -> TableMedia -> Model
+modelWithNewTable model d name storage media =
     let
         d2 =
-            { d | name = v |> String.trim |> String.toLower }
+            { d
+                | name = name
+                , storage = storage
+                , media = media
+            }
     in
     { model | newTableData = Just d2 }
 
@@ -444,6 +460,15 @@ stringToTableMedia str =
         "Memory and disc" ->
             Just Both
 
+        "both" ->
+            Just Both
+
+        "memory" ->
+            Just Memory
+
+        "disc" ->
+            Just Disc
+
         _ ->
             Nothing
 
@@ -516,18 +541,9 @@ modelWithNewTableReplica model t v =
         hostname =
             v.node.info.hostname
 
-        media =
-            case model.tableMediaSelection of
-                Nothing ->
-                    defaultTableMedia
-
-                Just m ->
-                    m
-
         r2 =
             Dict.insert hostname
                 { node = hostname
-                , media = media
                 }
                 r
 

@@ -439,11 +439,17 @@ newTablePage model =
                     [ div [ class "column col-6" ]
                         [ div [ class "form-group" ]
                             [ fLabel "Table name"
-                            , fText "Table name" data.name NewTableNameChanged
+                            , tableNameSelect (model |> tableNames) NewTableNameChanged
                             ]
                         , div [ class "form-group" ]
                             [ fLabel "Type"
-                            , tableStorageSelect data.storage NewTableStorageChanged
+                            , span []
+                                [ data.storage |> toString |> text ]
+                            ]
+                        , div [ class "form-group" ]
+                            [ fLabel "Media"
+                            , span []
+                                [ data.media |> toString |> text ]
                             ]
                         ]
                     ]
@@ -454,9 +460,6 @@ newTablePage model =
                             ]
                         , div [ class "form-group" ]
                             [ nodesSelect model NewTableReplicaNodeChanged
-                            ]
-                        , div [ class "form-group" ]
-                            [ tableMediaSelect model NewTableReplicaMediaChanged
                             ]
                         , div [ class "form-group" ]
                             [ dButton "Add replica" AddNewTableReplica ]
@@ -501,7 +504,6 @@ newTableDataReplicasPane model data =
                         [ data |> newTableStatusColor model |> statusCircle "16px"
                         ]
                     , th [] []
-                    , th [] []
                     ]
                 , tbody []
                     (List.map newTableDataReplica replicas)
@@ -513,8 +515,6 @@ newTableDataReplica data =
     tr []
         [ td [ class "col-3" ]
             [ text data.node ]
-        , td [ class "col-6" ]
-            [ data.media |> tableMediaToString |> text ]
         , td [ class "text-right col-3" ]
             [ dButton "Remove" (RemoveNewTableReplica data) ]
         ]
@@ -847,6 +847,17 @@ nodeTablePage model view table =
 onChange : (String -> msg) -> Html.Attribute msg
 onChange tagger =
     on "change" (Json.map tagger Html.Events.targetValue)
+
+
+tableNameSelect : List String -> (String -> Msg) -> Html Msg
+tableNameSelect names action =
+    select [ class "form-select", onChange action ]
+        (List.map
+            (\s ->
+                option [] [ s |> text ]
+            )
+            names
+        )
 
 
 tableStorageSelect : TableStorage -> (String -> Msg) -> Html Msg

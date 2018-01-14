@@ -134,13 +134,13 @@ type alias TableCopiesData =
 type alias NewTableData =
     { name : String
     , storage : TableStorage
+    , media : TableMedia
     , replicas : Dict String TableReplicaData
     }
 
 
 type alias TableReplicaData =
     { node : String
-    , media : TableMedia
     }
 
 

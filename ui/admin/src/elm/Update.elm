@@ -239,15 +239,40 @@ update msg model =
             { model | media = Just m } ! []
 
         NewTableNameChanged v ->
-            case model.newTableData of
+            case tableForName model v of
                 Nothing ->
-                    { contents = "No model to hold new table data. This is a bug. Please fix"
+                    { contents = "No such table " ++ v ++ ". This is a bug. Please fix"
                     , severity = SevError
                     }
                         |> error model
 
-                Just d ->
-                    modelWithNewTableName model d v ! []
+                Just tableView ->
+                    case model.newTableData of
+                        Nothing ->
+                            { contents = "No model to hold new table data. This is a bug. Please fix"
+                            , severity = SevError
+                            }
+                                |> error model
+
+                        Just d ->
+                            case tableView.table.info.kind |> toTableStorage of
+                                Nothing ->
+                                    { contents = "Invalid table storage for " ++ v ++ ". This is a bug. Please fix"
+                                    , severity = SevError
+                                    }
+                                        |> error model
+
+                                Just storage ->
+                                    case stringToTableMedia tableView.table.info.media of
+                                        Nothing ->
+                                            { contents = "Invalid table media for " ++ v ++ ". This is a bug. Please fix"
+                                            , severity = SevError
+                                            }
+                                                |> error model
+
+                                        Just media ->
+                                            modelWithNewTable model d tableView.table.info.name storage media
+                                                ! []
 
         NewTableStorageChanged v ->
             case model.newTableData of
