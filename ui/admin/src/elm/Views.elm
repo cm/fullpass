@@ -630,6 +630,8 @@ activeTableRow view groups =
         , td []
             [ tableGroups groups
             ]
+        , td []
+            []
         ]
 
 
@@ -645,6 +647,8 @@ inactiveTableRow view groups =
             ]
         , td []
             []
+        , td []
+            [ dButton "Create everywhere" (CreateTableEverywhere view.table) ]
         ]
 
 

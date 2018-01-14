@@ -43,6 +43,7 @@ type Msg
     | CreateTableReplica NodeView TableData
     | CreateTableReplicaOk
     | CreateTableReplicaErr UserMsg
+    | CreateTableEverywhere TableData
     | HostnameSelected String
     | MediaSelected String
     | NewTableNameChanged String
@@ -57,6 +58,7 @@ type Msg
     | CreateTable
     | CreateTableErr UserMsg
     | CreateTableOk
+    | CreateTableFullyOk
     | ToggleNodeDb NodeData
     | StartNodeDbOk HostData
     | StopNodeDbOk HostData

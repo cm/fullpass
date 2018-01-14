@@ -143,6 +143,9 @@ actionOkDecoder action =
         "create_table" ->
             Decode.succeed CreateTableOk
 
+        "create_table_fully" ->
+            Decode.succeed CreateTableFullyOk
+
         "delete_table_replica" ->
             Decode.succeed DeleteTableReplicaOk
 

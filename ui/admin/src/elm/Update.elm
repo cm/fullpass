@@ -232,6 +232,9 @@ update msg model =
             }
                 ! [ fetch_nodes model ]
 
+        CreateTableEverywhere t ->
+            model ! [ createTableEverywhere model.flags model.session t ]
+
         HostnameSelected h ->
             { model | hostname = Just h } ! []
 
@@ -347,6 +350,12 @@ update msg model =
                 ! []
 
         CreateTableOk ->
+            { model
+                | state = Tables
+            }
+                ! [ fetch_nodes model ]
+
+        CreateTableFullyOk ->
             { model
                 | state = Tables
             }

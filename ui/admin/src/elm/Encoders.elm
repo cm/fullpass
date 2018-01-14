@@ -160,6 +160,19 @@ encodeCreateTable session data =
         )
 
 
+encodeCreateTableEverywhere : String -> TableData -> String
+encodeCreateTableEverywhere session data =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "create_table_fully" )
+            , ( "session", Encode.string session )
+            , ( "name", Encode.string data.info.name )
+            , ( "type", data.info.kind |> Encode.string )
+            , ( "media", data.info.media |> Encode.string )
+            ]
+        )
+
+
 encodeStartDb : String -> String -> String
 encodeStartDb session host =
     Encode.encode 0

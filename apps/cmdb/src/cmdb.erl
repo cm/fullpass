@@ -1,6 +1,7 @@
 -module(cmdb).
 -export([behaviour_info/1, all_tables/0, table_for/1]).
--export([started/0, table_info/3, tables_info/0, table_copies_to_media/1]).
+-export([started/0, table_info/3, tables_info/0]).
+-export([table_copies_to_media/1, media_to_table_copies/1, type_to_storage/1, storage_to_type/1]).
 -export([add/3, add/1, drop/1, drop/2, create_schema/1, drop_schema/1, exists/1]).
 -export([start/0, stop/0, info/0, subscribe/0, unsubscribe/0, event_for/1]).
 -export([c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/1, l/4, l/5, l/6, l/7]).
@@ -83,6 +84,22 @@ table_copies_to_media(disc_copies) -> both;
 table_copies_to_media(disc_only_copies) -> disc;
 table_copies_to_media(ram_copies) -> memory.
 
+media_to_table_copies(both) -> disc_copies;
+media_to_table_copies(<<"both">>) -> disc_copies;
+media_to_table_copies(disc) -> disc_only__copies;
+media_to_table_copies(<<"disc">>) -> disc_only_copies;
+media_to_table_copies(memory) -> ram_copies;
+media_to_table_copies(<<"memory">>) -> ram_copies.
+
+storage_to_type(set) -> set;
+storage_to_type(<<"set">>) -> set;
+storage_to_type(bag) -> bag;
+storage_to_type(<<"bag">>) -> bag;
+storage_to_type(ordered_set) -> ordered_set;
+storage_to_type(<<"ordered_set">>) -> ordered_set.
+
+type_to_storage(T) -> cmkit:to_bin(T).
+
 tables_info() ->
     case started() of 
         true -> 
@@ -142,8 +159,10 @@ clear({T, _, _}) ->
 await(Tabs) -> 
     mnesia:wait_for_tables(Tabs, 3000).
 
+c({Tab, Storage, Media}) ->
+    c({Tab, Storage, Media, [node()]});
 
-c({Tab, Type, Storage}) ->
+c({Tab, Storage, Media, Nodes}) ->
     case has_copies(schema, disc_copies) of 
         true -> 
             case exists(Tab) of
@@ -151,8 +170,8 @@ c({Tab, Type, Storage}) ->
                     case mnesia:create_table(Tab,
                                              [{attributes, record_info(fields, triplet)},
                                               {record_name, triplet},
-                                              {type, Type},
-                                              {Storage, [node()]}]) of 
+                                              {type, storage_to_type(Storage)},
+                                              {media_to_table_copies(Media), Nodes}]) of 
                         {atomic, ok} -> 
                             ok;
                         {aborted, Reason} -> 
@@ -165,13 +184,13 @@ c({Tab, Type, Storage}) ->
             {error, schema_not_initialized}
     end.
 
-c(Tab, Type, Storage) ->
+c(Tab, Storage, Media) ->
     case has_copies(schema, disc_copies) of
         true -> 
             Info = [{attributes, record_info(fields, triplet)},
                     {record_name, triplet},
-                    {type, Type}],
-            Info2 = add_copies_info(Info, Storage),
+                    {type, storage_to_type(Storage)}],
+            Info2 = add_copies_info(Info, Media),
             case exists(Tab) of
                 false -> 
                     case mnesia:create_table(Tab, Info2) of
