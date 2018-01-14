@@ -408,6 +408,14 @@ update msg model =
         EventsOk events ->
             { model | events = events } ! []
 
+        ClearEvents ->
+            model ! [ clearEvents model ]
+
+        ClearEventsOk ->
+            { model | state = Events }
+                ! [ fetchEvents model
+                  ]
+
 
 withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 withNewTableData model next =

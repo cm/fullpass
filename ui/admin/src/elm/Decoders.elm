@@ -173,6 +173,9 @@ actionOkDecoder action =
             Decode.map EventsOk
                 (field "data" eventsDecoder)
 
+        "cluster_clear_events" ->
+            Decode.succeed ClearEventsOk
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding ok")
                 |> Decode.fail

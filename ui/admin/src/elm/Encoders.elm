@@ -203,3 +203,13 @@ encodeFetchEvents session =
             , ( "session", Encode.string session )
             ]
         )
+
+
+encodeClearEvents : String -> String
+encodeClearEvents session =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "cluster_clear_events" )
+            , ( "session", Encode.string session )
+            ]
+        )

@@ -377,15 +377,20 @@ statusCircle size color =
 
 nodeStatusColor : NodeData -> String
 nodeStatusColor n =
-    case n.cluster.health of
-        "green" ->
-            "success"
+    case n.db.started of
+        True ->
+            case n.cluster.health of
+                "green" ->
+                    "success"
 
-        "yellow" ->
+                "yellow" ->
+                    "warning"
+
+                _ ->
+                    "error"
+
+        False ->
             "warning"
-
-        _ ->
-            "error"
 
 
 nodeRow : NodeView -> Html Msg
@@ -1290,13 +1295,17 @@ activeCss a =
 
 eventsPage : Model -> Html Msg
 eventsPage model =
-    div [ class "" ]
-        [ table [ class "table table-striped table-hover" ]
-            [ tbody []
-                (model
-                    |> events
-                    |> List.map eventRow
-                )
+    div []
+        [ div []
+            [ pButton "Clear events" ClearEvents ]
+        , div [ class "mt-2" ]
+            [ table [ class "table table-striped table-hover" ]
+                [ tbody []
+                    (model
+                        |> events
+                        |> List.map eventRow
+                    )
+                ]
             ]
         ]
         |> sidebarLayout2 model

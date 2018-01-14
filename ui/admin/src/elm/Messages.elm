@@ -64,3 +64,5 @@ type Msg
     | StopNodeDbOk HostData
     | ShowEvents
     | EventsOk (List EventData)
+    | ClearEvents
+    | ClearEventsOk
