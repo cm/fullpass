@@ -1315,6 +1315,8 @@ eventRow : EventData -> Html Msg
 eventRow ev =
     tr []
         [ td []
+            [ ev |> eventColor |> statusCircle "28px" ]
+        , td []
             [ text ev.kind
             ]
         , td []

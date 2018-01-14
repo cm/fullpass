@@ -619,10 +619,21 @@ wordsToBytes w =
 events : Model -> List EventData
 events model =
     model.events
+        |> List.sortBy .date
+        |> List.reverse
 
 
+eventColor : EventData -> String
+eventColor ev =
+    case ev.kind of
+        "mnesia_up" ->
+            "success"
 
---|> List.reverse
+        "mnesia_down" ->
+            "warning"
+
+        _ ->
+            "gray"
 
 
 humanDay : Date.Date -> String
