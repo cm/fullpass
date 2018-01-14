@@ -5,7 +5,7 @@
   {applications,
    [kernel,
     stdlib,
-    mini_s3
+    erlcloud 
    ]},
   {env,[]},
   {modules, []},

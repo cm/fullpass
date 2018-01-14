@@ -5,26 +5,20 @@
 config() ->
     {cmkit:config(s3_access_key, ?APP),
      cmkit:config(s3_secret_key, ?APP),
-     cmkit:config(s3_host, ?APP),
-     cmkit:config(s3_port, ?APP),
-     cmkit:config(s3_scheme, ?APP),
-     cmkit:config(s3_region, ?APP),
-     cmkit:config(s3_bucket_access, ?APP)}.
+     cmkit:config(s3_host, ?APP)}.
 
-client() ->
-    {AccessKey, SecretKey, Host, Port, Scheme, _Region, BucketAccess} = config(),
-    Endpoint = atom_to_list(Scheme) ++ "://" ++ Host ++ ":" ++ integer_to_list(Port),
-    cmkit:log({cms3, Endpoint}),
-    mini_s3:new(AccessKey, SecretKey, Endpoint, BucketAccess).
+client() -> 
+    {AccessKey, SecretKey, Host} = config(),
+    erlcloud_s3:new(AccessKey, SecretKey, Host).
 
 put_file(Bucket, Key, Content) ->
-    case mini_s3:put_object(Bucket, Key, Content, [], [], client()) of
-        [{version_id, _}] -> ok;
+    case erlcloud_s3:put_object(Bucket, Key, Content, client()) of 
+        [{version_id, _}|_] -> ok;
         Error -> {error, Error}
     end.
-
+    
 get_file(Bucket, Key) ->
-    case mini_s3:get_object(Bucket, Key, [], client()) of
+    try erlcloud_s3:get_object(Bucket, Key, client()) of
         [_|_]=Meta ->
             case proplists:get_value(content, Meta) of
                 undefined ->
@@ -34,4 +28,11 @@ get_file(Bucket, Key) ->
             end;
         Other ->
             {error, Other}
+
+    catch
+        _:{aws_error, {http_error, 404, _, _}} -> 
+            {error, not_found};
+        _:E -> 
+            {error, E}
+
     end.
