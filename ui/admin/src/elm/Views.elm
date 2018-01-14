@@ -75,6 +75,9 @@ view model =
             "Fetching tables ... "
                 |> waitingPage model
 
+        Events ->
+            eventsPage model
+
 
 withSelectedNodeTable : Model -> (NodeView -> TableData -> Html Msg) -> Html Msg
 withSelectedNodeTable model next =
@@ -202,11 +205,22 @@ isTablesState model =
             False
 
 
+isEventsState : Model -> Bool
+isEventsState model =
+    case model.state of
+        Events ->
+            True
+
+        _ ->
+            False
+
+
 sidebar : Model -> Html Msg
 sidebar model =
     ul [ class "nav" ]
         [ navItem "Nodes" "icon-drive" (model |> isNodeState) ShowNodes
         , navItem "Tables" "icon-database" (model |> isTablesState) ShowTables
+        , navItem "Events" "icon-database" (model |> isEventsState) ShowEvents
         ]
 
 
@@ -245,6 +259,9 @@ breadcrumb model =
 
         NewTable ->
             newTableBreadcrumb
+
+        Events ->
+            eventsBreadcrumb
 
         _ ->
             div [] []
@@ -1254,6 +1271,43 @@ activeCss a =
 
         False ->
             ""
+
+
+eventsPage : Model -> Html Msg
+eventsPage model =
+    div [ class "" ]
+        [ table [ class "table table-striped table-hover" ]
+            [ tbody []
+                (model
+                    |> events
+                    |> List.map eventRow
+                )
+            ]
+        ]
+        |> sidebarLayout2 model
+
+
+eventsBreadcrumb : Html Msg
+eventsBreadcrumb =
+    ul [ class "breadcrumb" ]
+        [ li [ class "breadcrumb-item" ]
+            [ text "Events"
+            ]
+        ]
+
+
+eventRow : EventData -> Html Msg
+eventRow ev =
+    tr []
+        [ td []
+            [ text ev.kind
+            ]
+        , td []
+            [ text ev.info
+            ]
+        , td []
+            [ ev.date |> humanDate |> text ]
+        ]
 
 
 fPassword : String -> String -> (String -> Msg) -> Html Msg

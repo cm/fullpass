@@ -166,6 +166,10 @@ actionOkDecoder action =
             Decode.map StartNodeDbOk
                 (field "data" hostDecoder)
 
+        "cluster_events" ->
+            Decode.map EventsOk
+                (field "data" eventsDecoder)
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding ok")
                 |> Decode.fail
@@ -298,3 +302,17 @@ hostDecoder : Decoder HostData
 hostDecoder =
     Decode.map HostData
         (field "host" Decode.string)
+
+
+eventsDecoder : Decoder (List EventData)
+eventsDecoder =
+    Decode.list eventDecoder
+
+
+eventDecoder : Decoder EventData
+eventDecoder =
+    Decode.map4 EventData
+        (field "id" Decode.string)
+        (field "date" Decode.int)
+        (field "type" Decode.string)
+        (field "info" Decode.string)

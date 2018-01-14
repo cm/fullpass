@@ -366,6 +366,14 @@ update msg model =
             }
                 ! [ fetch_nodes model ]
 
+        ShowEvents ->
+            { model | state = Events }
+                ! [ fetchEvents model
+                  ]
+
+        EventsOk events ->
+            { model | events = events } ! []
+
 
 withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 withNewTableData model next =

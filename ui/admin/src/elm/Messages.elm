@@ -60,3 +60,5 @@ type Msg
     | ToggleNodeDb NodeData
     | StartNodeDbOk HostData
     | StopNodeDbOk HostData
+    | ShowEvents
+    | EventsOk (List EventData)

@@ -3,7 +3,7 @@
 -export([started/0, table_info/3, tables_info/0, table_copies_to_media/1]).
 -export([add/3, add/1, drop/1, drop/2, create_schema/1, drop_schema/1, exists/1]).
 -export([start/0, stop/0, info/0, subscribe/0, unsubscribe/0, event_for/1]).
--export([c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/4, l/5, l/6, l/7]).
+-export([c/1, c/3, clear/0, await/1, k/1, b/1, u/3, u/4, i/3, i/4, d/3, d/4, r/2, r/3, s/2, s/3, m/3, m/4, j/4, j/6, j/7, j/8, w/1, uw/1, f/5, l/1, l/4, l/5, l/6, l/7]).
 -record(triplet, {s, p, o}).
 
 behaviour_info(callbacks) ->
@@ -444,6 +444,23 @@ w(Tab) ->
 
 uw(Tab) ->
     mnesia:unsubscribe({table, Tab, simple}).
+
+l(Tab) -> 
+    case mnesia:activity(sync_dirty,
+        fun() ->
+             mnesia:foldl(
+                fun(#triplet{o=V}, Acc) ->
+              [V|Acc]
+          end,
+          [],
+          Tab)
+  end) of 
+        {aborted, R} -> 
+            {error, R};
+        V -> 
+            {ok, V}
+    end.
+
 
 l(Tab, K, From, Callback) -> 
     l(Tab, K, is, undefined, From, Callback).

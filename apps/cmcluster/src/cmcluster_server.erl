@@ -86,7 +86,7 @@ yellow(info, {nodedown, Node}, Data) ->
     {next_state, State, Data};
 
 yellow(info, {mnesia_system_event, E}, Data) ->
-    cluster:log(E),
+    cmcluster:log(E),
     {next_state, yellow, Data};
 
 yellow({call, From}, nodes, Data) ->

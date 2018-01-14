@@ -1,6 +1,7 @@
 module Init exposing (..)
 
 import Commands exposing (..)
+import Date
 import Dict exposing (..)
 import Material
 import Messages exposing (..)
@@ -26,6 +27,7 @@ newModel flags =
     , newTableData = Nothing
     , nodeSelection = Nothing
     , tableMediaSelection = Nothing
+    , events = []
     }
 
 
@@ -596,3 +598,49 @@ tableNodes t =
 wordsToBytes : Int -> Int
 wordsToBytes w =
     8 * w
+
+
+events : Model -> List EventData
+events model =
+    model.events
+
+
+
+--|> List.reverse
+
+
+humanDay : Date.Date -> String
+humanDay d =
+    [ Date.day d |> toString
+    , Date.month d |> toString
+    , Date.year d |> toString
+    ]
+        |> String.join " "
+
+
+humanTime : Date.Date -> String
+humanTime d =
+    [ Date.hour d
+    , Date.minute d
+    , Date.second d
+    ]
+        |> List.map toString
+        |> List.map
+            (\s ->
+                String.padLeft 2 '0' s
+            )
+        |> String.join ":"
+
+
+humanDate : Int -> String
+humanDate millis =
+    let
+        d =
+            millis
+                |> toFloat
+                |> Date.fromTime
+    in
+    [ humanDay d
+    , humanTime d
+    ]
+        |> String.join " "

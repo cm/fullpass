@@ -25,6 +25,7 @@ type State
     | DeletingTableReplica
     | CreatingSchema
     | DeletingSchema
+    | Events
 
 
 type alias LoginData =
@@ -179,6 +180,14 @@ type alias HostData =
     }
 
 
+type alias EventData =
+    { id : String
+    , date : Int
+    , kind : String
+    , info : String
+    }
+
+
 type alias Model =
     { flags : Flags
     , loginData : LoginData
@@ -196,4 +205,5 @@ type alias Model =
     , newTableData : Maybe NewTableData
     , nodeSelection : Maybe String
     , tableMediaSelection : Maybe TableMedia
+    , events : List EventData
     }

@@ -32,8 +32,7 @@ fmt(Format, Args) ->
   erlang:iolist_to_binary(io_lib:format(xmerl_ucs:to_utf8(Format), Args )).
 
 now() ->
-  {Mega, Secs, _} = os:timestamp(), 
-  Mega*1000000 + Secs.
+    erlang:system_time(millisecond).
 
 uuid() ->
   list_to_binary(uuid:to_string(uuid:uuid4())).

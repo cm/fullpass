@@ -187,3 +187,13 @@ encodeStopDb session host =
             , ( "session", Encode.string session )
             ]
         )
+
+
+encodeFetchEvents : String -> String
+encodeFetchEvents session =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "cluster_events" )
+            , ( "session", Encode.string session )
+            ]
+        )

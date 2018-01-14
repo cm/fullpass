@@ -6,8 +6,11 @@
         delete_table_replica/2,
         create_schema_replica/2,
         stop_db/1,
-        start_db/1]).
--export([log/1, clear_log/0]).
+        start_db/1,
+        log/1, 
+        log/0, 
+        clear_log/0]).
+
 
 cmdb_tables() -> 
     [{cluster_log, bag, disc_only_copies}].
@@ -48,6 +51,7 @@ start_db(Host) ->
 stop_db(Host) ->
     do_in_host(Host, stop_db).
 
+
 do_in_host(Host, Op) ->
     case cmkit:node_for_host(Host) of
         {ok, Node} ->
@@ -68,3 +72,6 @@ log(E) ->
 
 clear_log() ->
     ok.
+
+log() -> 
+    cmdb:l(cluster_log).
