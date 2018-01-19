@@ -1,5 +1,5 @@
 -sname cmrtc
 -setcookie cmrtc
-
+-smp enable
 +K true
 +A30
