@@ -1,4 +1,5 @@
 -name {{ app_name }}@{{ ansible_hostname }}.{{ app_domain }} 
 -setcookie {{ app_name }}
+-smp enable
 +K true
 +A30
