@@ -28,6 +28,8 @@ newModel flags =
     , nodeSelection = Nothing
     , tableMediaSelection = Nothing
     , events = []
+    , backups = []
+    , newBackupData = Nothing
     }
 
 
@@ -634,6 +636,52 @@ eventColor ev =
 
         _ ->
             "gray"
+
+
+backups : Model -> List BackupData
+backups model =
+    model.backups
+        |> List.sortBy .date
+        |> List.reverse
+
+
+backupColor : BackupData -> String
+backupColor ev =
+    "gray"
+
+
+newBackupData : NewBackupData
+newBackupData =
+    { name = "" }
+
+
+newBackupDataWithName : Maybe NewBackupData -> String -> NewBackupData
+newBackupDataWithName data n =
+    case data of
+        Nothing ->
+            let
+                d =
+                    newBackupData
+            in
+            { d | name = n }
+
+        Just d ->
+            { d | name = n }
+
+
+canCreateBackup : Model -> Bool
+canCreateBackup model =
+    case model.newBackupData of
+        Nothing ->
+            False
+
+        Just t ->
+            case t.name |> String.trim of
+                "" ->
+                    False
+
+                _ ->
+                    True
 
 
 humanDay : Date.Date -> String

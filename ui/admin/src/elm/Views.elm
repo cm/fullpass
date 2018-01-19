@@ -78,6 +78,12 @@ view model =
         Events ->
             eventsPage model
 
+        Backups ->
+            backupsPage model
+
+        NewBackup ->
+            newBackupPage model
+
 
 withSelectedNodeTable : Model -> (NodeView -> TableData -> Html Msg) -> Html Msg
 withSelectedNodeTable model next =
@@ -215,12 +221,23 @@ isEventsState model =
             False
 
 
+isBackupsState : Model -> Bool
+isBackupsState model =
+    case model.state of
+        Backups ->
+            True
+
+        _ ->
+            False
+
+
 sidebar : Model -> Html Msg
 sidebar model =
     ul [ class "nav" ]
         [ navItem "Nodes" "icon-drive" (model |> isNodeState) ShowNodes
         , navItem "Tables" "icon-database" (model |> isTablesState) ShowTables
         , navItem "Events" "icon-database" (model |> isEventsState) ShowEvents
+        , navItem "Backups" "icon-database" (model |> isBackupsState) ShowBackups
         ]
 
 
@@ -262,6 +279,9 @@ breadcrumb model =
 
         Events ->
             eventsBreadcrumb
+
+        Backups ->
+            backupsBreadcrumb
 
         _ ->
             div [] []
@@ -1334,6 +1354,81 @@ eventRow ev =
         , td []
             [ ev.date |> humanDate |> text ]
         ]
+
+
+backupsPage : Model -> Html Msg
+backupsPage model =
+    div []
+        [ div []
+            [ pButton "Create backup..." ShowNewBackup ]
+        , div [ class "mt-2" ]
+            [ table [ class "table table-striped table-hover" ]
+                [ tbody []
+                    (model
+                        |> backups
+                        |> List.map backupRow
+                    )
+                ]
+            ]
+        ]
+        |> sidebarLayout2 model
+
+
+backupsBreadcrumb : Html Msg
+backupsBreadcrumb =
+    ul [ class "breadcrumb" ]
+        [ li [ class "breadcrumb-item" ]
+            [ text "Backups"
+            ]
+        ]
+
+
+backupRow : BackupData -> Html Msg
+backupRow ev =
+    tr []
+        [ td []
+            [ ev |> backupColor |> statusCircle "28px" ]
+        , td []
+            [ text ev.info
+            ]
+        , td []
+            [ ev.date |> humanDate |> text ]
+        ]
+
+
+newBackupPage : Model -> Html Msg
+newBackupPage model =
+    case model.newBackupData of
+        Nothing ->
+            "No newBackupData initialized in model. This is a bug, please fix"
+                |> errorPage model
+
+        Just data ->
+            div [ class "" ]
+                [ div [ class "" ]
+                    [ div [ class "form-group" ]
+                        [ h4 [] [ text "Create backup" ] ]
+                    ]
+                , div [ class "columns" ]
+                    [ div [ class "column col-6" ]
+                        [ div [ class "form-group" ]
+                            [ fLabel "Name"
+                            , fText "Name" data.name NewBackupNameChanged
+                            ]
+                        ]
+                    ]
+                , div [ class "columns mt-2" ]
+                    [ div [ class "column col-2" ]
+                        [ case model |> canCreateBackup of
+                            True ->
+                                pButton "Create backup" CreateBackup
+
+                            False ->
+                                disabledPButton "Create backup"
+                        ]
+                    ]
+                ]
+                |> sidebarLayout2 model
 
 
 fPassword : String -> String -> (String -> Msg) -> Html Msg

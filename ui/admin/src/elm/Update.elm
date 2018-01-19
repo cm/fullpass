@@ -416,6 +416,38 @@ update msg model =
                 ! [ fetchEvents model
                   ]
 
+        ShowBackups ->
+            { model | state = Backups }
+                ! [ fetchBackups model ]
+
+        BackupsOk backups ->
+            { model | backups = backups } ! []
+
+        ShowNewBackup ->
+            { model
+                | state = NewBackup
+                , newBackupData = Just newBackupData
+            }
+                ! []
+
+        NewBackupNameChanged n ->
+            { model | newBackupData = Just (newBackupDataWithName model.newBackupData n) } ! []
+
+        CreateBackup ->
+            case model.newBackupData of
+                Nothing ->
+                    { contents = "No new backup data defined"
+                    , severity = SevWarn
+                    }
+                        |> error model
+
+                Just d ->
+                    model ! [ createBackup model d ]
+
+        CreateBackupOk ->
+            { model | state = Backups }
+                ! [ fetchBackups model ]
+
 
 withNewTableData : Model -> (NewTableData -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 withNewTableData model next =

@@ -213,3 +213,24 @@ encodeClearEvents session =
             , ( "session", Encode.string session )
             ]
         )
+
+
+encodeFetchBackups : String -> String
+encodeFetchBackups session =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "backups" )
+            , ( "session", Encode.string session )
+            ]
+        )
+
+
+encodeCreateBackup : String -> NewBackupData -> String
+encodeCreateBackup session data =
+    Encode.encode 0
+        (Encode.object
+            [ ( "action", Encode.string "create_backup" )
+            , ( "name", Encode.string data.name )
+            , ( "session", Encode.string session )
+            ]
+        )

@@ -176,6 +176,13 @@ actionOkDecoder action =
         "cluster_clear_events" ->
             Decode.succeed ClearEventsOk
 
+        "backups" ->
+            Decode.map BackupsOk
+                (field "data" backupsDecoder)
+
+        "create_backup" ->
+            Decode.succeed CreateBackupOk
+
         _ ->
             ("Unsupported action: " ++ action ++ " when decoding ok")
                 |> Decode.fail
@@ -321,4 +328,17 @@ eventDecoder =
         (field "id" Decode.string)
         (field "date" Decode.int)
         (field "type" Decode.string)
+        (field "info" Decode.string)
+
+
+backupsDecoder : Decoder (List BackupData)
+backupsDecoder =
+    Decode.list backupDecoder
+
+
+backupDecoder : Decoder BackupData
+backupDecoder =
+    Decode.map3 BackupData
+        (field "id" Decode.string)
+        (field "date" Decode.int)
         (field "info" Decode.string)

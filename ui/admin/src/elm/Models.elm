@@ -26,6 +26,8 @@ type State
     | CreatingSchema
     | DeletingSchema
     | Events
+    | Backups
+    | NewBackup
 
 
 type alias LoginData =
@@ -188,6 +190,17 @@ type alias EventData =
     }
 
 
+type alias BackupData =
+    { id : String
+    , date : Int
+    , info : String
+    }
+
+
+type alias NewBackupData =
+    { name : String }
+
+
 type alias Model =
     { flags : Flags
     , loginData : LoginData
@@ -206,4 +219,6 @@ type alias Model =
     , nodeSelection : Maybe String
     , tableMediaSelection : Maybe TableMedia
     , events : List EventData
+    , backups : List BackupData
+    , newBackupData : Maybe NewBackupData
     }

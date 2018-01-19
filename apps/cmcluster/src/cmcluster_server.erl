@@ -2,7 +2,7 @@
 -behaviour(gen_statem).
 -export([start_link/0]).
 -export([init/1, callback_mode/0, terminate/3]).
--export([expected_nodes/0, all_nodes/0]).
+-export([expected_nodes/0, all_nodes/0, backup/1]).
 -export([red/3, yellow/3, green/3]).
 -record(data, {}).
 
@@ -14,6 +14,9 @@ start_link() ->
 
 all_nodes() -> 
     {ok, [ gen_statem:call({cmcluster_server, N}, nodes) || N <- net_adm:world() ]}.
+
+backup(Name) ->
+    gen_statem:call({cmcluster_server, self()}, {backup, global, Name}).
 
 init([]) ->
     net_kernel:monitor_nodes(true),

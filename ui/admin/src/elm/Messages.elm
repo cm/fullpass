@@ -66,3 +66,9 @@ type Msg
     | EventsOk (List EventData)
     | ClearEvents
     | ClearEventsOk
+    | ShowBackups
+    | BackupsOk (List BackupData)
+    | ShowNewBackup
+    | NewBackupNameChanged String
+    | CreateBackup
+    | CreateBackupOk

@@ -9,11 +9,13 @@
         start_db/1,
         log/1, 
         log/0, 
-        clear_log/0]).
+        clear_log/0,
+        backup/1]).
 
 
 cmdb_tables() -> 
-    [{cluster_log, bag, disc_only_copies}].
+    [{cluster_log, bag, disc_only_copies},
+     {cluster_backups, set, disc_copies}].
 
 drop_schema(Host) ->
     do_in_host(Host, drop_schema).
@@ -75,3 +77,6 @@ clear_log() ->
 
 log() -> 
     cmdb:l(cluster_log).
+
+backup(Name) ->
+    cmcluster_server:backup(Name).
