@@ -20,9 +20,14 @@ init([Dbs]) ->
 
 ready({call, From}, {put, Ns, K, V}, #data{config=Config}=Data) ->
     Res = case Config of
-        #{ Ns := #{ name := Name, replicas := Nodes }} ->
-            R = [ gen_statem:call({Name, Node}, {put, K, V}) || Node <- Nodes ],
-            cmdb_util:all_ok(R);
+        #{ Ns := #{ name := Name, replicas := Hosts }} ->
+            case cmkit:hosts_to_nodes(Hosts) of
+                {ok, Nodes} ->
+                    R = [ gen_statem:call({Name, Node}, {put, K, V}) || Node <- Nodes ],
+                    cmdb_util:all_ok(R);
+                {error, Reason} ->
+                    {error, Reason}
+            end;
         _ ->
             {unknown, Ns}
     end,
@@ -30,9 +35,14 @@ ready({call, From}, {put, Ns, K, V}, #data{config=Config}=Data) ->
 
 ready({call, From}, {put, Ns, Pairs}, #data{config=Config}=Data) ->
     Res = case Config of
-        #{ Ns := #{ name := Name, replicas := Nodes }} ->
-            R = [ gen_statem:call({Name, Node}, {put, Pairs}) || Node <- Nodes],
-            cmdb_util:all_ok(R);
+        #{ Ns := #{ name := Name, replicas := Hosts}} ->
+            case cmkit:hosts_to_nodes(Hosts) of
+                {ok, Nodes} ->
+                    R = [ gen_statem:call({Name, Node}, {put, Pairs}) || Node <- Nodes],
+                    cmdb_util:all_ok(R);
+                {error, Reason} ->
+                    {error, Reason}
+            end;
         _ ->
             {unknown, Ns}
     end,

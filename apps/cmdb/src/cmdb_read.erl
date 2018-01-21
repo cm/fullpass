@@ -20,9 +20,14 @@ init([Dbs]) ->
 
 ready({call, From}, {get, Ns, K}, #data{config=Config}=Data) ->
     Res = case Config of
-        #{ Ns := #{ name := Name, replicas := Nodes }} ->
-            Node = cmkit:closest_node(Nodes),
-            gen_statem:call({Name, Node}, {get, K});
+        #{ Ns := #{ name := Name, replicas := Hosts }} ->
+            case cmkit:hosts_to_nodes(Hosts) of
+                {ok, Nodes} ->
+                    Node = cmkit:closest_node(Nodes),
+                    gen_statem:call({Name, Node}, {get, K});
+                {error, Reason} ->
+                    {error, Reason}
+            end;
         _ ->
             {unknown, Ns}
     end,

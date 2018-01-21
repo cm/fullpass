@@ -244,7 +244,7 @@ hosts_to_nodes([], _, Res) ->
 hosts_to_nodes([H|Rem], Nodes, Res) ->
     case node_for_host(H, Nodes) of
         {ok, Node} -> hosts_to_nodes(Rem, Nodes, [Node|Res]);
-        not_found -> {error, H}
+        {error, not_found} -> {error, H}
     end.
 
 closest_node(Nodes) -> 
