@@ -5,7 +5,17 @@
 -define(SERVER, ?MODULE).
 
 start_link() ->
-  supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
-  {ok, {{one_for_one, 0, 1}, []}}.
+    Dbs = lists:map(fun(Db) ->
+                            maps:from_list(Db)
+                    end, cmkit:config(dbs, cmdb)),
+    
+    Replicas = [ cmkit:child_spec(Id, cmdb_replica, [Db], worker)
+                 || #{ name := Id}=Db <- Dbs, cmdb_util:is_local(Db) ],
+        
+    Routers = [ cmkit:child_spec(R, R, [Dbs], worker) 
+                || R <- [cmdb_read, cmdb_write]],
+
+    {ok, {{one_for_one, 0, 1}, Replicas ++ Routers }}.

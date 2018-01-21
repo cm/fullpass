@@ -1,12 +1,12 @@
-{application, cmstore,
+{application, cmdb,
  [{description, "An OTP application"},
   {vsn, "0.1.0"},
   {registered, []},
-  {mod, { cmstore_app, []}},
+  {mod, { cmdb_app, []}},
   {applications,
    [kernel,
     stdlib,
-    elmdb
+    mnesia
    ]},
   {env,[]},
   {modules, []},

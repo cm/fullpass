@@ -1,7 +1,7 @@
 .PHONY: ui
 
 console:
-	@rebar3 as $(p) release; _build/$(p)/rel/cmrtc/bin/cmrtc console
+	@rebar3 release; _build/default/rel/cmrtc/bin/cmrtc console
 
 dist:
 	@cd apps/$(app)/ui; yarn build; cp dist/app.js ../../$(app)/priv

@@ -6,7 +6,7 @@
   {applications,
    [kernel,
     stdlib,
-    mnesia
+    elmdb
    ]},
   {env,[]},
   {modules, []},

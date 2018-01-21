@@ -28,34 +28,50 @@ search(Keyword) ->
 
 
 store(Places) ->
-    cmdb:b(lists:flatmap(fun(P) ->
-                                      map(parse(P)) 
-                              end, Places)).
+    Entries = lists:flatmap(fun(P) ->
+                                    parse(P)
+                            end, Places),
+    cmdb:write("places", Entries).
 
-map(Entries) ->
-    lists:flatmap(fun([C, T, Name, Lat, Lon ]) ->
-        case country(C) of
-            undefined -> [];
-            #{ table := LocationsTab, index := IndexTab } ->
-                Key = {Lat, Lon},
-                Info = #{ city => Name, area => undefined, zip => undefined,
-                         country => C, lat => Lat, lon => Lon, elev => undefined },
-                [{u, LocationsTab, Key, is, Info}, 
-                 {u, IndexTab, T, is, Key}]
-        end
-    end, Entries).
+
+%map(Entries) ->
+%    lists:flatmap(fun([C, T, Name, Lat, Lon ]) ->
+%        %case country(C) of
+%        %    undefined -> [];
+%       %     _ ->
+%                Key = {Lat, Lon},
+%                Info = #{ city => Name, area => undefined, zip => undefined,
+%                         country => C, lat => Lat, lon => Lon, elev => undefined },
+%                [{ Key, Info}, {T, Key}]
+%        %%end
+%    end, Entries).
 
 
 parse([C, Tokens, Name, _, _, Lat, Lon]) ->
-    case country(C) of 
-        undefined -> [];
-        _ ->
-            Tokens2 = binary:split(Tokens, <<" ">>, [global]), 
-            [[C, T, Name, Lat, Lon] || T <- Tokens2]
-    end.
+    K = {Lat, Lon},
+    Place = #{ city => Name, area => undefined, zip => undefined,
+               country => C, lat => Lat, lon => Lon, elev => undefined },
+    
+    Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
+    [ {K, Place} | Indices]. 
+
+
+    %%case country(C) of 
+    %%    undefined -> [];
+    %%    _ ->
+    %%        Tokens2 = binary:split(Tokens, <<" ">>, [global]), 
+    %%        [[C, T, Name, Lat, Lon] || T <- Tokens2].
+    %%end.
 
 countries() -> 
-    #{ <<"id">> => #{ name => <<"Indonesia">>,
+    #{ 
+        <<"ad">> => #{ name => <<"Andorra">>,
+                      code => <<"ad">>,
+                      search_by => <<"andorra">>, 
+                      table => places_id_coord,
+                      index => places_id_index },
+  
+        <<"id">> => #{ name => <<"Indonesia">>,
                       code => <<"id">>,
                       search_by => <<"indonesia">>, 
                       table => places_id_coord,

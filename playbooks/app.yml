@@ -30,6 +30,7 @@
       with_items:
         - "mnesia"
         - "cluster"
+        - "cmdb"
 
     - name: Configure release
       template: 

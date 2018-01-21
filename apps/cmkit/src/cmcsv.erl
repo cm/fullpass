@@ -9,9 +9,9 @@ parse(File, BatchSize, Fun) ->
         {ok, IoDevice} ->
             case without_header(IoDevice) of
                 {ok, _} ->
-                    read_batch(IoDevice, BatchSize, BatchSize, [], Fun),
+                    R = read_batch(IoDevice, BatchSize, BatchSize, 0, [], Fun),
                     file:close(IoDevice),
-                    ok;
+                    R;
                 Other -> 
                     Other
             end;
@@ -19,24 +19,24 @@ parse(File, BatchSize, Fun) ->
             Other
     end.
 
-read_batch(IoDevice, 0, BatchSize, Batch, Fun) ->
+read_batch(IoDevice, 0, BatchSize, LinesRead, Batch, Fun) ->
     case Fun(Batch) of 
         ok -> 
-            read_batch(IoDevice, BatchSize, BatchSize, [], Fun);
-        _ -> 
+            read_batch(IoDevice, BatchSize, BatchSize, LinesRead, [], Fun);
+        Error ->
             file:close(IoDevice),
-            stopped
+            Error
     end;
 
-read_batch(IoDevice, Current, BatchSize, Batch, Fun) ->
+read_batch(IoDevice, Current, BatchSize, LinesRead, Batch, Fun) ->
     case file:read_line(IoDevice) of
         {ok, Data} ->
             Data2 = binary:part(Data, {0, size(Data)-1}),
             Fields = binary:split(Data2, <<",">>, [global]),
-            read_batch(IoDevice, Current-1, BatchSize, [Fields|Batch], Fun);
+            read_batch(IoDevice, Current-1, BatchSize, LinesRead + 1, [Fields|Batch], Fun);
         eof ->
             Fun(Batch),
-            ok;
+            {ok, LinesRead +1};
         Other -> 
             Other
     end.

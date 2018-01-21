@@ -1,5 +1,5 @@
 -module(cmkit).
--export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2]).
+-export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, worker_child_specs/1, worker_child_spec/1, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2, closest_node/1]).
 
 log(Data)->
     io:format("[LOG] ~p~n", [Data]).
@@ -38,6 +38,12 @@ uuid() ->
   list_to_binary(uuid:to_string(uuid:uuid4())).
 
 ret(R) -> R.
+
+worker_child_specs(Mods) ->
+    [ worker_child_spec(M) || M <- Mods ].
+
+worker_child_spec(M) ->
+    child_spec(M, worker).
 
 child_spec(M, Type) ->
   child_spec(M, [], Type).
@@ -239,4 +245,12 @@ hosts_to_nodes([H|Rem], Nodes, Res) ->
     case node_for_host(H, Nodes) of
         {ok, Node} -> hosts_to_nodes(Rem, Nodes, [Node|Res]);
         not_found -> {error, H}
+    end.
+
+closest_node(Nodes) -> 
+    case lists:member(node(), Nodes) of
+        true ->
+            node();
+        false ->
+            lists:nth(rand:uniform(length(Nodes)), Nodes)
     end.
