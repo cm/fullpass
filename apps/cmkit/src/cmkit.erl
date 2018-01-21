@@ -230,7 +230,7 @@ node_for_host(H) ->
 
 node_for_host(H, Nodes) ->
     Match = lists:filter(fun(N) -> 
-                            node_host_short(N) =:= H
+                            node_host_short(N) =:= to_bin(H)
                          end, Nodes),
     case Match of 
         [Node] -> {ok, Node};
