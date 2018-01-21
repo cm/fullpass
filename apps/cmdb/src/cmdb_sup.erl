@@ -21,5 +21,7 @@ init([]) ->
         
     Routers = [ cmkit:child_spec(R, R, [Dbs], worker) 
                 || R <- [cmdb_read, cmdb_write]],
+
+    Schema = [ cmkit:child_spec(cmdb_schema, cmdb_schema, [], worker)],   
     
-    {ok, {{one_for_one, 0, 1}, Replicas ++ Routers }}.
+    {ok, {{one_for_one, 0, 1}, Replicas ++ Routers ++ Schema }}.

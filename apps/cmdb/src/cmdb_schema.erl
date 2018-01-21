@@ -3,9 +3,7 @@
 -export([start_link/0]).
 -export([init/1, callback_mode/0, terminate/3]).
 -export([red/3, yellow/3, green/3]).
--record(data, {db, env}).
--define(APP, "schema").
--define(NS, "cmdb").
+-record(data, {}).
 
 callback_mode() ->
     state_functions.
@@ -16,12 +14,12 @@ start_link() ->
 init([]) ->
     net_kernel:monitor_nodes(true),
     net_adm:world(),
-    {ok, Env, Db} = cmdb_util:open(?APP, ?NS),
     case length(cmdb_util:expected_nodes()) of
         1 ->
-            cmkit:log({cmdb, green, standalone}),
-            {ok, green, #data{db=Db, env=Env}};
+            cmkit:log({cmdb, started, green, standalone}),
+            {ok, green, #data{}};
         _ ->
+            cmkit:log({cmdb, started, red, cmdb_util:expected_nodes()}),
             {ok, red, #data{}}
     end.
 
@@ -70,16 +68,11 @@ green(info, Msg, Data) ->
     cmkit:log({cmdb, State, ignored_message, Msg}),
     {next_state, State, Data};
 
-green({call, From}, {add_db, App, Ns, Nodes}, #data{db=_Db}=Data) ->
-    cmkit:log({cmdb_schema, add_db, App, Ns, Nodes}),
-    Res = ok,
-    {keep_state, Data, {reply, From, Res}};
-
-green({call, From}, Msg, #data{db=_Db}=Data) ->
+green({call, From}, Msg, Data) ->
     cmkit:log({cmdb_schema, green, ignored_message, Msg}),
     Res = ignored,
     {keep_state, Data, {reply, From, Res}}.
 
-terminate(Reason, _, #data{env=Env}) ->
-    cmkit:log({cmdb, closing, ?APP, ?NS, Reason}),
-    cmdb_util:close(?APP, ?NS, Env). 
+terminate(Reason, _, _) ->
+    cmkit:log({cmdb_schema, terminate, Reason}),
+    ok.
