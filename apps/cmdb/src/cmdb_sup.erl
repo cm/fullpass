@@ -9,9 +9,10 @@ start_link() ->
 
 init([]) ->
     Dbs = lists:map(fun(Props) ->
-                        #{ replicas := Hosts } = Db = maps:from_list(Props),
-                        {ok, Nodes }  = cmkit:hosts_to_nodes(Hosts),
-                        Db#{ replicas => Nodes }
+                        maps:from_list(Props)
+                        %#{ replicas := Hosts } = Db = maps:from_list(Props),
+                        %{ok, Nodes }  = cmkit:hosts_to_nodes(Hosts),
+                        %Db#{ replicas => Nodes }
                     end, cmkit:config(dbs, cmdb)),
     
 
