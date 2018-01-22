@@ -39,24 +39,22 @@ close(App, Ns, Env) ->
     cmkit:log({cmdb, closed, Ns, App, Res}),
     Res.
 
-write(Db, K, V) ->
-    Kbin = erlang:term_to_binary(K),
+write(Db, K, V) when is_binary(K) ->
     Vbin = erlang:term_to_binary(V),
-    cmkit:log({cmdb_util, write, Kbin, Vbin}),
-    elmdb:put(Db, Kbin, Vbin).
+    elmdb:put(Db, K, Vbin).
 
 write_all(Env, Db, Pairs) ->
     {ok, Txn} = elmdb:txn_begin(Env),
     lists:foreach(fun({K, V}) ->
-                    elmdb:txn_put(Txn, Db, erlang:term_to_binary(K), 
+                    elmdb:txn_put(Txn, Db, K, 
                                  erlang:term_to_binary(V)
                                  )
                   end, Pairs),
     ok = elmdb:txn_commit(Txn),
     ok.
 
-read(Db, K) ->
-    case elmdb:get(Db, erlang:term_to_binary(K)) of
+read(Db, K) when is_binary(K) ->
+    case elmdb:get(Db, K) of
         not_found -> not_found;
         {ok, V} -> {ok, erlang:binary_to_term(V)}
     end.
