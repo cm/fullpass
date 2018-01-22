@@ -47,9 +47,9 @@ store(Places) ->
 %    end, Entries).
 
 
-parse([C, Tokens, _Name, _, _, Lat, Lon]) ->
+parse([C, _Tokens, _Name, _, _, Lat, Lon]) ->
     K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
-    Place = #{ city => Tokens, 
+    Place = #{ city => C, 
                country => C, 
                lat => Lat, 
                lon => Lon},
