@@ -47,15 +47,15 @@ store(Places) ->
 %    end, Entries).
 
 
-parse([C, _Tokens, Name, _, _, Lat, Lon]) ->
+parse([C, Tokens, _Name, _, _, Lat, Lon]) ->
     K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
-    Place = #{ city => Name, 
+    Place = #{ city => Tokens, 
                country => C, 
                lat => Lat, 
                lon => Lon},
-    Indices = [],
+    %Indices = [],
     %Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
-    [ {K, Place} | Indices]. 
+    [ {K, Place}]. 
 
 
     %%case country(C) of 
