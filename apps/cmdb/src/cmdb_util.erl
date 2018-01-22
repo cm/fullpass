@@ -40,8 +40,9 @@ close(App, Ns, Env) ->
     Res.
 
 write(Db, K, V) ->
-    elmdb:put(Db, erlang:term_to_binary(K),
-              erlang:term_to_binary(V)).
+    Kbin = erlang:term_to_binary(K),
+    Vbin = erlang:term_to_binary(V),
+    elmdb:put(Db, Kbin, Vbin).
 
 write_all(Env, Db, Pairs) ->
     {ok, Txn} = elmdb:txn_begin(Env),
