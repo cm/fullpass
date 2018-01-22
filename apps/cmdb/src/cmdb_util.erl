@@ -1,5 +1,6 @@
 -module(cmdb_util).
 -export([
+         load_csv/6,
          state/0,
          open/3,
          close/3,
@@ -14,6 +15,13 @@
          current_nodes/0,
          expected_nodes/0
         ]).
+
+load_csv(Name, Type, Size, Filename, BatchSize, Fun) ->
+    {ok, Env, Db} = open(Name, Type, Size),
+    cmcsv:parse(Filename, BatchSize, fun(Lines) ->
+                                        Pairs= lists:flatmap(Fun, Lines),
+                                        write_all(Env, Db, Pairs)
+                                     end).
 
 open(Name, Type, Size) -> 
     Opts = opts(Type),
