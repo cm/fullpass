@@ -42,6 +42,7 @@ close(App, Ns, Env) ->
 write(Db, K, V) ->
     Kbin = erlang:term_to_binary(K),
     Vbin = erlang:term_to_binary(V),
+    cmkit:log({cmdb_util, write, Kbin, Vbin}),
     elmdb:put(Db, Kbin, Vbin).
 
 write_all(Env, Db, Pairs) ->
