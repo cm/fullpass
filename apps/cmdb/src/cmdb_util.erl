@@ -44,6 +44,7 @@ write(Db, K, V) when is_binary(K) ->
     elmdb:put(Db, K, Vbin).
 
 write_all(Env, Db, Pairs) ->
+    cmkit:log({cmdb_util, write_all, Pairs}),
     {ok, Txn} = elmdb:txn_begin(Env),
     lists:foreach(fun({K, V}) ->
                     elmdb:txn_put(Txn, Db, K, 
