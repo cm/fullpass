@@ -23,7 +23,9 @@ ready({call, From}, {put, Ns, K, V}, #data{config=Config}=Data) ->
         #{ Ns := #{ name := Name, replicas := Hosts }} ->
             case cmkit:hosts_to_nodes(Hosts) of
                 {ok, Nodes} ->
+                    cmkit:log({write, Ns, K, V, Nodes}),
                     R = [ gen_statem:call({Name, Node}, {put, K, V}) || Node <- Nodes ],
+                    cmkit:log({write, R}),
                     cmdb_util:all_ok(R);
                 {error, Reason} ->
                     {error, Reason}

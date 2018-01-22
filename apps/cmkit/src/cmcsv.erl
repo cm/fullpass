@@ -1,8 +1,37 @@
 -module(cmcsv).
--export([sample/2, parse/3]).
+-export([sample/2, fold/3, parse/3]).
 
 sample(File, Size) ->
     parse("/Users/pedrogutierrez/Downloads/" ++ File, Size, self()).
+
+fold(File, Acc, Fun) ->
+    case file:open(File, [raw, read_ahead, binary]) of
+        {ok, IoDevice} ->
+            case without_header(IoDevice) of
+                {ok, _} ->
+                    R = fold_line(IoDevice, 1, Acc, Fun),
+                    file:close(IoDevice),
+                    R;
+                Other -> 
+                    Other
+            end;
+        Other -> 
+            Other
+    end.
+
+fold_line(Io, LinesRead, Acc, Fun) ->
+    case file:read_line(Io) of
+        {ok, Data} ->
+            Data2 = binary:part(Data, {0, size(Data)-1}),
+            Fields = binary:split(Data2, <<",">>, [global]),
+            Acc2 = Fun(Acc, Fields),
+            fold_line(Io, LinesRead+1, Acc2, Fun);
+        eof ->
+            {ok, Acc, LinesRead +1};
+        Other -> 
+            Other
+    end.
+
 
 parse(File, BatchSize, Fun) ->
     case file:open(File, [raw, read_ahead, binary]) of
