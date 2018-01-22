@@ -31,6 +31,7 @@ store(Places) ->
     Entries = lists:flatmap(fun(P) ->
                                     parse(P)
                             end, Places),
+    cmkit:log({cmplaces, Entries}),
     cmdb:write("places", Entries).
 
 
