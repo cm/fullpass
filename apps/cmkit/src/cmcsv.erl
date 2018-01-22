@@ -60,7 +60,8 @@ read_batch(IoDevice, 0, BatchSize, LinesRead, Batch, Fun) ->
 read_batch(IoDevice, Current, BatchSize, LinesRead, Batch, Fun) ->
     case file:read_line(IoDevice) of
         {ok, Data} ->
-            Data2 = binary:part(Data, {0, size(Data)-1}),
+            Unicode = cmkit:uniconvert(binary_to_list(Data)), 
+            Data2 = binary:part(Data, {0, size(Unicode)-1}),
             Fields = binary:split(Data2, <<",">>, [global]),
             read_batch(IoDevice, Current-1, BatchSize, LinesRead + 1, [Fields|Batch], Fun);
         eof ->
