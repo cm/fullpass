@@ -5,7 +5,7 @@ sample(File, Size) ->
     parse("/Users/pedrogutierrez/Downloads/" ++ File, Size, self()).
 
 fold(File, Acc, Fun) ->
-    case file:open(File, [raw, read_ahead, binary]) of
+    case file:open(File, [{encoding, utf8}, read_ahead, binary]) of
         {ok, IoDevice} ->
             case without_header(IoDevice) of
                 {ok, _} ->

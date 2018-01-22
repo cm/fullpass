@@ -47,12 +47,14 @@ store(Places) ->
 %    end, Entries).
 
 
-parse([C, Tokens, Name, _, _, Lat, Lon]) ->
-    K = {Lat, Lon},
-    Place = #{ city => Name, area => undefined, zip => undefined,
-               country => C, lat => Lat, lon => Lon, elev => undefined },
-    
-    Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
+parse([C, _Tokens, Name, _, _, Lat, Lon]) ->
+    K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
+    Place = #{ city => Name, 
+               country => C, 
+               lat => Lat, 
+               lon => Lon},
+    Indices = [],
+    %Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
     [ {K, Place} | Indices]. 
 
 
