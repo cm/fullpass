@@ -8,7 +8,7 @@ cmdb_tables() ->
                   end, maps:values(countries())).
 
 load(Filename) ->
-    cmcsv:parse(Filename, 500, fun store/1).
+    cmcsv:parse(Filename, 100, fun store/1).
 
 
 search(C, Keyword) ->
