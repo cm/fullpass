@@ -31,8 +31,10 @@ store(Places) ->
     Entries = lists:flatmap(fun(P) ->
                                     parse(P)
                             end, Places),
-    cmkit:log({cmplaces, Entries}),
-    cmdb:write("places", Entries).
+    %%cmkit:log({cmplaces, Entries}),
+    lists:foreach(fun({K, V}) ->
+                    cmdb:write("places", K, V)
+                  end, Entries).
 
 
 %map(Entries) ->
