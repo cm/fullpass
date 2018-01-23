@@ -31,7 +31,7 @@ store(Places) ->
     Entries = lists:flatmap(fun(P) ->
                                     parse(P)
                             end, Places),
-    %cmkit:log({cmplaces, Entries}),
+    cmkit:log({cmplaces, Entries}),
     cmdb:write("places", Entries).
 
 
@@ -50,13 +50,13 @@ store(Places) ->
 
 parse([C, Tokens, _Name, _, _, Lat, Lon]) ->
     K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
-    Place = #{ city => C, 
+    _Place = #{ city => C, 
                country => C, 
                lat => Lat, 
                lon => Lon},
     Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
-    [ {K, Place} | Indices ]. 
-
+    %[ {K, Place} | Indices ]. 
+    Indices.
 
     %%case country(C) of 
     %%    undefined -> [];
