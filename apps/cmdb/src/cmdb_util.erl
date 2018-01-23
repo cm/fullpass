@@ -40,14 +40,16 @@ close(App, Ns, Env) ->
     Res.
 
 write(Db, K, V) when is_binary(K) ->
-    Vbin = erlang:term_to_binary(V),
+    %Vbin = erlang:term_to_binary(V),
+    Vbin = cmkit:jsone(V),
     elmdb:put(Db, K, Vbin).
 
 write_all(Env, Db, Pairs) ->
     {ok, Txn} = elmdb:txn_begin(Env),
     lists:foreach(fun({K, V}) ->
                     elmdb:txn_put(Txn, Db, K, 
-                                 erlang:term_to_binary(V)
+                                 %erlang:term_to_binary(V)
+                                 cmkit:jsone(V)
                                  )
                   end, Pairs),
     ok = elmdb:txn_commit(Txn),
@@ -56,7 +58,8 @@ write_all(Env, Db, Pairs) ->
 read(Db, K) when is_binary(K) ->
     case elmdb:get(Db, K) of
         not_found -> not_found;
-        {ok, V} -> {ok, erlang:binary_to_term(V)}
+        %{ok, V} -> {ok, erlang:binary_to_term(V)}
+        {ok, V} -> {ok, cmkit:jsond(V)}
     end.
 
 
