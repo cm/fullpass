@@ -50,15 +50,16 @@ store(Places) ->
 %    end, Entries).
 
 
-parse([C, Tokens, _Name, _, _, Lat, Lon]) ->
+parse([C, _, Name, _, _, Lat, Lon]) ->
     K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
-    _Place = #{ city => C, 
+    P = #{ city => Name, 
                country => C, 
                lat => Lat, 
                lon => Lon},
-    Indices = [ {T, K} || T <- binary:split(Tokens, <<" ">>, [global])],
+    [{K, P}].
+    %Indices = [ {K, P} || T <- binary:split(Tokens, <<" ">>, [global])],
     %[ {K, Place} | Indices ]. 
-    Indices.
+    %Indices.
 
     %%case country(C) of 
     %%    undefined -> [];

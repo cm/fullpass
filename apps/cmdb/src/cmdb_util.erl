@@ -42,7 +42,7 @@ close(App, Ns, Env) ->
 write(Db, K, V) when is_binary(K) ->
     %Vbin = erlang:term_to_binary(V),
     Vbin = cmkit:jsone(V),
-    cmkit:log({cmdb_util, K, Vbin}),
+    %cmkit:log({cmdb_util, K, Vbin}),
     elmdb:put(Db, K, Vbin).
 
 write_all(Env, Db, Pairs) ->

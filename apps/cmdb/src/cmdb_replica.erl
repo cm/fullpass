@@ -14,12 +14,12 @@ start_link(#{ name := DbName}=Db) ->
 init([#{ name := Name,
          size := Size,
          type := Type }]) ->
-    {ok, Env, Db} = cmdb_cowdb:open(Name, Type, Size),
-    cmkit:log({cmdb_replica, Name, Type, node(), Db, started}),
+    {ok, Env, Db} = cmdb_util:open(Name, Type, Size),
+    cmkit:log({cmdb_replica, Name, Type, node(), started}),
     {ok, ready, #data{db=Db, env=Env}}.
 
 ready({call, From}, {put, K, V}, #data{db=Db}=Data) ->
-    Res = cmdb_cowdb:write(Db, K, V),
+    Res = cmdb_util:write(Db, K, V),
     {keep_state, Data, {reply, From, Res}};
 
 ready({call, From}, {put, Pairs}, #data{env=Env, db=Db}=Data) ->
