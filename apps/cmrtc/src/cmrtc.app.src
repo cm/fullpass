@@ -8,8 +8,7 @@
     cmdb,
     cmkit,
     cmweb,
-    cmsocial,
-    cmplaces
+    cmsocial
    ]},
   {env,[]},
   {modules, []},
