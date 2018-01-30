@@ -2,3 +2,9 @@ app_user: "fullpass"
 app_name: "fullpass"
 app_domain: "fullpass.in"
 remove_data: no 
+
+stores:
+  - name: places
+    port: 7700
+    hosts: 
+      - a0

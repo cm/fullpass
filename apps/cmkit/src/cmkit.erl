@@ -1,5 +1,5 @@
 -module(cmkit).
--export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, worker_child_specs/1, worker_child_spec/1, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2, closest_node/1, uniconvert/1]).
+-export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsone/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, worker_child_specs/1, worker_child_spec/1, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2, closest_node/1, uniconvert/1, bin_join/2, to_list/1]).
 
 log(Data)->
     io:format("[LOG] ~p~n", [Data]).
@@ -16,14 +16,21 @@ config(Key, App, Default) ->
         Val -> Val
     end.
 
-jsond(Bin) ->
+jsond(Bin) when is_binary(Bin) ->
     try jsone:decode(Bin, [{object_format, map}])
     catch
-      _:_ -> kit:err(<<"Invalid Json">>)
-    end.
+      _:_ -> cmkit:err(invalid_json)
+    end;
+
+jsond(Str) when is_list(Str) ->
+    jsond(to_bin(Str)).
 
 jsone(Term) ->
-    jsone:encode(Term).
+    jsone:encode(Term, [{float_format, [{decimals, 32}, compact]}]).
+
+jsone(Term, Opts) -> 
+    jsone:encode(Term, Opts).
+
 
 err(Reason) ->
   {error, #{reason => Reason}}.
@@ -206,6 +213,9 @@ to_bin(A) when is_binary(A) ->
 to_bin(A) when is_list(A) ->
     erlang:list_to_binary(A);
 
+to_bin(A) when is_integer(A) ->
+    list_to_binary(integer_to_list(A));
+
 to_bin({_, _, _, _}=Ip) ->
     to_bin(inet:ntoa(Ip)).
 
@@ -263,3 +273,20 @@ uniconvert(String) ->
     exit:{ucs,{bad_utf8_character_code}} ->
       list_to_binary(xmerl_ucs:to_utf8(String))
   end.
+
+bin_join([], _Sep) ->
+  <<>>;
+bin_join([Part], _Sep) ->
+  Part;
+bin_join(List, Sep) ->
+  lists:foldr(fun (A, B) ->
+    if
+      bit_size(B) > 0 -> <<A/binary, Sep/binary, B/binary>>;
+      true -> A
+    end
+  end, <<>>, List).
+
+to_list(L) when is_list(L) -> 
+    L;
+to_list(B) when is_binary(B) ->
+    binary_to_list(B).

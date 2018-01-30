@@ -10,18 +10,11 @@ start_link() ->
 init([]) ->
     Dbs = lists:map(fun(Props) ->
                         maps:from_list(Props)
-                        %#{ replicas := Hosts } = Db = maps:from_list(Props),
-                        %{ok, Nodes }  = cmkit:hosts_to_nodes(Hosts),
-                        %Db#{ replicas => Nodes }
                     end, cmkit:config(dbs, cmdb)),
     
+    Routers = [ db_spec(Db) || Db <- Dbs ],
+    {ok, {{one_for_one, 0, 1}, Routers }}.
 
-    Replicas = [ cmkit:child_spec(Id, cmdb_replica, [Db], worker)
-                 || #{ name := Id}=Db <- Dbs, cmdb_util:is_local(Db) ],
-        
-    Routers = [ cmkit:child_spec(R, R, [Dbs], worker) 
-                || R <- [cmdb_read, cmdb_write]],
+db_spec(#{ name := Name}=Db) ->
+    cmkit:child_spec(Name, cmdb_client, [Db], worker).
 
-    Schema = [ cmkit:child_spec(cmdb_schema, cmdb_schema, [], worker)],   
-    
-    {ok, {{one_for_one, 0, 1}, Replicas ++ Routers ++ Schema }}.

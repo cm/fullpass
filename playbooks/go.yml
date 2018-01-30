@@ -1,0 +1,22 @@
+- hosts: all
+  tasks:
+
+    - name: Remove old Go
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /usr/local/go
+        - /usr/bin/go
+
+    - name: Install official Go binary
+      unarchive:
+        src: https://dl.google.com/go/go1.9.3.linux-amd64.tar.gz
+        dest: /usr/local
+        remote_src: yes
+    
+    - name: Link Go
+      file:
+        src: /usr/local/go/bin/go
+        dest: /usr/bin/go
+        state: link

@@ -1,0 +1,38 @@
+[Unit]
+Description=Places Service
+ConditionPathExists=/home/fullpass/data/places
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=staff
+LimitNOFILE=1024
+
+Restart=always
+RestartSec=10
+startLimitIntervalSec=60
+
+WorkingDirectory=/home/fullpass/data/places
+ExecStart=/usr/local/bin/places
+Environment="AWS_ACCESS_KEY_ID=AKIAIK6JIWRFO3P2JR6A"
+Environment="AWS_SECRET_ACCESS_KEY=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"
+Environment="AWS_REGION=eu-west-3"
+Environment="AWS_BUCKET=in-fullpass-backups"
+Environment="CMDB_MAP_SIZE=10737418240"
+Environment="CMDB_NAME=places"
+Environment="CMDB_PORT=7700"
+Environment="CMDB_DATA=/home/fullpass/data/places"
+
+
+# make sure log directory exists and owned by syslog
+PermissionsStartOnly=true
+ExecStartPre=/bin/mkdir -p /var/log/places
+ExecStartPre=/bin/chown syslog:adm /var/log/places
+ExecStartPre=/bin/chmod 755 /var/log/places
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=places
+
+[Install]
+WantedBy=multi-user.target

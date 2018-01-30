@@ -14,11 +14,11 @@ load_csv(Filename, Fun) ->
         end, Lines)
     end).
 
-write(Ns, Pairs) ->
-    gen_statem:call({cmdb_write, node()}, {put, Ns, Pairs}).
+write(Db, Pairs) ->
+    gen_statem:call({Db, node()}, {put, Pairs}).
 
-write(Ns, K, V) ->
-    gen_statem:call({cmdb_write, node()}, {put, Ns, K, V}).
+write(Db, K, V) ->
+    gen_statem:call({Db, node()}, {put, K, V}).
 
-read(Ns, K) ->
-    gen_statem:call({cmdb_read, node()}, {get, Ns, K}).
+read(Db, K) ->
+    gen_statem:call({Db, node()}, {get, K}).

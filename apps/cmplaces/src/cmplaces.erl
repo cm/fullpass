@@ -33,7 +33,7 @@ store(Places) ->
                             end, Places),
     %%cmkit:log({cmplaces, Entries}),
     lists:foreach(fun({K, V}) ->
-                    cmdb:write("places", K, V)
+                    cmdb:write(places, K, V)
                   end, Entries).
 
 
@@ -50,23 +50,20 @@ store(Places) ->
 %    end, Entries).
 
 
-parse([C, _, Name, _, _, Lat, Lon]) ->
-    K = <<Lat/binary, <<":">>/binary, Lon/binary>>,
+parse([C, Tokens, Name, _, _, Lat, Lon]) ->
+    Lat2 = cmkit:bin_to_number(Lat),
+    Lon2 = cmkit:bin_to_number(Lon),
+    K = cmkit:jsone([ Lat2, Lon2 ], [{float_format, [{decimals, 7}, compact]}]),
     P = #{ city => Name, 
                country => C, 
-               lat => Lat, 
-               lon => Lon},
-    [{K, P}].
-    %Indices = [ {K, P} || T <- binary:split(Tokens, <<" ">>, [global])],
-    %[ {K, Place} | Indices ]. 
-    %Indices.
+               lat => Lat2, 
+               lon => Lon2},
 
-    %%case country(C) of 
-    %%    undefined -> [];
-    %%    _ ->
-    %%        Tokens2 = binary:split(Tokens, <<" ">>, [global]), 
-    %%        [[C, T, Name, Lat, Lon] || T <- Tokens2].
-    %%end.
+    Tokens2 = lists:flatmap(fun(T) -> 
+                                    binary:split(T, <<"-">>, [global])
+                            end, binary:split(Tokens, <<" ">>, [global])),
+    Indices = [ {T, K} || T <- Tokens2],
+    [ {K, P} | Indices ]. 
 
 countries() -> 
     #{ 

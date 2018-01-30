@@ -32,6 +32,15 @@ accounts:
 haproxy:
 	@ansible-playbook -i inventories/a playbooks/haproxy.yml
 
+go: 
+	@ansible-playbook -i inventories/a playbooks/go.yml
+
+cmdb:
+	@ansible-playbook -i inventories/a playbooks/cmdb.yml
+
+places:
+	@ansible-playbook -i inventories/a playbooks/places.yml
+
 erlang:
 	@ansible-playbook -i inventories/a playbooks/erlang.yml
 
