@@ -23,11 +23,13 @@ init([#{name := Name }=Db]) ->
 ready({call, From}, {get, K}, #data{endpoints=[E1|_]}=Data) ->
     Url = <<E1/binary, <<"/">>/binary, K/binary>>,
     Res = cmhttp:get(Url),
+    cmkit:log({cmdb, get, Url, Res}),
     {keep_state, Data, {reply, From, Res}};
 
 ready({call, From}, {put, K, V}, #data{endpoints=[E1|_]}=Data) ->
     Url = <<E1/binary, <<"/">>/binary, K/binary>>,
     Res = cmhttp:post(Url, ?JSON, V),
+    cmkit:log({cmdb, put, Url, Res}),
     {keep_state, Data, {reply, From, Res}};
 
 ready({call, From}, {put, _Pairs}, #data{endpoints=[_E1|_]}=Data) ->
