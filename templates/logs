@@ -1,1 +1,0 @@
-tail -f /home/{{ app_user }}/app/_build/default/rel/cmrtc/log/erlang.log.1

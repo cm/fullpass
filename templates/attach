@@ -1,3 +1,0 @@
-#!/bin/bash
-/home/{{ app_user }}/app/_build/default/rel/cmrtc/bin/cmrtc attach
-#erl -name admin@{{ ansible_hostname }}.{{ app_domain }} -setcookie {{ app_name }} -remsh {{ app_name}}@{{ ansible_hostname }}.{{ app_domain }}

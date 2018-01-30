@@ -1,8 +1,0 @@
-- hosts: all
-  tasks:
-
-    - name: Create a user account
-      user:
-        name: fullpass
-        state: present
-        group: staff

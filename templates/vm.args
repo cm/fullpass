@@ -1,6 +1,0 @@
--name {{ app_name }}@{{ ansible_hostname }}.{{ app_domain }} 
--setcookie {{ app_name }}
--smp enable
-+pc unicode
-+K true
-+A30
