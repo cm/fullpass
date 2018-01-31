@@ -33,8 +33,9 @@ store(Places) ->
                             end, Places),
     %%cmkit:log({cmplaces, Entries}),
     lists:foreach(fun({K, V}) ->
-                    cmdb:write(sessions, K, V)
-                  end, Entries).
+                    cmdb:write(places, K, V)
+                  end, Entries),
+    {ok, length(Entries)}.
 
 
 %map(Entries) ->
