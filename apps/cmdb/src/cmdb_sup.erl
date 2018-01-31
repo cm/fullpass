@@ -16,5 +16,9 @@ init([]) ->
     {ok, {{one_for_one, 0, 1}, Routers }}.
 
 db_spec(#{ name := Name}=Db) ->
-    cmkit:child_spec(Name, cmdb_client, [Db], worker).
+    Mod = db_impl(Db),
+    cmkit:child_spec(Name, Mod, [Db], worker).
+
+db_impl(#{ scheme := http}) -> cmdb_client;
+db_impl(#{ scheme := dets}) -> cmdb_dets.
 
