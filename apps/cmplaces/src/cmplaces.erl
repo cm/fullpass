@@ -8,7 +8,7 @@ cmdb_tables() ->
                   end, maps:values(countries())).
 
 load(Filename) ->
-    cmcsv:parse(Filename, 100, fun store/1).
+    cmcsv:parse(Filename, 500, fun store/1).
 
 
 search(C, Keyword) ->
@@ -32,9 +32,9 @@ store(Places) ->
                                     parse(P)
                             end, Places),
     %%cmkit:log({cmplaces, Entries}),
-    lists:foreach(fun({K, V}) ->
-                    cmdb:write(places, K, V)
-                  end, Entries),
+    %lists:foreach(fun({K, V}) ->
+                    cmdb:write(places, Entries),
+    %              end, Entries),
     {ok, length(Entries)}.
 
 

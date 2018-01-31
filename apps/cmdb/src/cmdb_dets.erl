@@ -40,8 +40,8 @@ ready({call, From}, {put, K, V}, #data{name=Name}=Data) ->
     Res = dets:insert(Name, {K, V}),
     {keep_state, Data, {reply, From, Res}};
 
-ready({call, From}, {put, _Pairs}, #data{name=_Name}=Data) ->
-    Res = {error, not_implemented},
+ready({call, From}, {put, Pairs}, #data{name=Name}=Data) ->
+    Res = dets:insert(Name, Pairs),
     {keep_state, Data, {reply, From, Res}}.
 
 terminate(Reason, _, #data{name=Name}) ->
