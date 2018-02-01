@@ -22,10 +22,10 @@ init([#{name := Name}=Db]) ->
                                {file, Filename}
                               ]) of 
         {ok, Name} -> 
-            cmkit:log({cmdb, Name, dets, started, Filename}),
+            cmkit:log({cmdb, Name, dets, started}),
             {ok, ready, #data{name=Name, db=Db}};
         {error, E} ->
-            cmkit:log({cmdb_dets, Name, error, E}),
+            cmkit:log({cmdb_dets, Name, dets, error, E}),
             {error, E}
     end.
 

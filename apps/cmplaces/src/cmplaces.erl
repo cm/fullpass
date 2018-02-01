@@ -38,29 +38,14 @@ store(Places) ->
     {ok, length(Entries)}.
 
 
-%map(Entries) ->
-%    lists:flatmap(fun([C, T, Name, Lat, Lon ]) ->
-%        %case country(C) of
-%        %    undefined -> [];
-%       %     _ ->
-%                Key = {Lat, Lon},
-%                Info = #{ city => Name, area => undefined, zip => undefined,
-%                         country => C, lat => Lat, lon => Lon, elev => undefined },
-%                [{ Key, Info}, {T, Key}]
-%        %%end
-%    end, Entries).
-
-
 parse([C, Tokens, Name, _, _, Lat, Lon]) ->
-    Lat2 = Lat,
-    Lon2 = Lon,
-    %Lat2 = cmkit:bin_to_number(Lat),
-    %Lon2 = cmkit:bin_to_number(Lon),
-    K = cmkit:jsone([ Lat2, Lon2 ], [{float_format, [{decimals, 7}, compact]}]),
+    Lat2 = cmkit:bin_to_number(Lat),
+    Lon2 = cmkit:bin_to_number(Lon),
+    K = {Lat2, Lon2},
     P = #{ city => Name, 
-               country => C, 
-               lat => Lat2, 
-               lon => Lon2},
+           country => C, 
+           lat => Lat2, 
+           lon => Lon2},
 
     Tokens2 = lists:flatmap(fun(T) -> 
                                     binary:split(T, <<"-">>, [global])

@@ -17,7 +17,7 @@ start_link(#{ name := Name }=Db) ->
 
 init([#{name := Name }=Db]) ->
     Urls = urls(Db),
-    cmkit:log({cmdb_client, Name, Urls, started}),
+    cmkit:log({cmdb, Name, http, started}),
     {ok, ready, #data{endpoints=Urls, db=Db}}.
 
 ready({call, From}, {get, K}, #data{endpoints=[E1|_]}=Data) ->

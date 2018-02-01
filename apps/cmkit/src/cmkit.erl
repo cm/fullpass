@@ -191,8 +191,18 @@ list_to_number(L) ->
     try list_to_float(L)
     catch
         error:badarg ->
+            L2 = re:replace(L, "^-\\.", "-0.", [{return, list}]),
+            L3 = re:replace(L2, "^\\.", "0.", [{return, list}]),
+            list_to_number(L3, final)
+    end.
+
+list_to_number(L, final) ->
+    try list_to_float(L)
+    catch
+        error:badarg ->
             list_to_integer(L)
     end.
+    
 
 distinct(List) ->
     sets:to_list(sets:from_list(List)).

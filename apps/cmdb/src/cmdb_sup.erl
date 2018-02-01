@@ -13,7 +13,8 @@ init([]) ->
                     end, cmkit:config(dbs, cmdb)),
     
     Routers = [ db_spec(Db) || Db <- Dbs ],
-    {ok, {{one_for_one, 0, 1}, Routers }}.
+    Cloud =  cmkit:child_spec(cmdb_cloud, cmdb_cloud, [], worker),
+    {ok, {{one_for_one, 0, 1}, [Cloud | Routers] }}.
 
 db_spec(#{ name := Name}=Db) ->
     Mod = db_impl(Db),
