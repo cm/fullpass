@@ -1,29 +1,32 @@
 -module(cmdb).
 -export([
-         load_csv/2,
          write/2,
          write/3,
          read/2,
-         backup/1
+         backup/1,
+         restore/2
         ]).
 
-load_csv(Filename, Fun) -> 
-    cmcsv:parse(Filename, 500, fun(Lines) -> 
-        lists:foreach(fun(L) ->
-            {K, V} = Fun(L),
-            write(K, V)
-        end, Lines)
-    end).
-
-write(Db, Pairs) ->
-    gen_statem:call({Db, node()}, {put, Pairs}).
+write(Db, Pairs) -> 
+    in( node_for(Db), Db, {put, Pairs}).
 
 write(Db, K, V) ->
-    gen_statem:call({Db, node()}, {put, K, V}).
+    in( node_for(Db), Db, {put, K, V}).
 
 read(Db, K) ->
-    gen_statem:call({Db, node()}, {get, K}).
+    in( node_for(Db), Db, {get, K}).
 
 backup(Db) -> 
-    gen_statem:call({Db, node()}, backup).
+    in( node_for(Db), Db, backup).
 
+restore(Db, Name) -> 
+    in( node_for(Db), Db, {restore, Name}).
+
+node_for(Db) -> 
+    gen_statem:call({cmdb_cloud, node()}, {node, Db}).
+
+in({ok, N}, Db, Op) ->
+    gen_statem:call({Db, N}, Op);
+
+in(_, _, _) ->
+    {error, unavailable}.

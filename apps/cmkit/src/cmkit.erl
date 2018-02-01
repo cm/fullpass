@@ -1,5 +1,5 @@
 -module(cmkit).
--export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsone/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, worker_child_specs/1, worker_child_spec/1, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2, closest_node/1, uniconvert/1, bin_join/2, to_list/1, fmt_date/0]).
+-export([log/1, config/2, config/3, err/1, fmt/2, jsone/1, jsone/2, jsond/1, now/0, uuid/0, ret/1, child_spec/2, child_spec/3, child_spec/4, child_spec/5, worker_child_specs/1, worker_child_spec/1, parse/2, diff_mins/2, diff_secs/2, mins_since/1, match_map/2, search_map/2, search_map/3, implements/2, lower_bin/1, list_without/2, bin_to_number/1, distinct/1, ip_str/1, to_bin/1, sname/0, node_host/1, node_host_short/1,  hosts_to_nodes/1, node_for_host/1, intersection/2, closest_node/1, uniconvert/1, bin_join/2, to_list/1, fmt_date/0, mkdirp/1]).
 
 log(Data)->
     io:format("[LOG] ~p~n", [Data]).
@@ -243,7 +243,7 @@ node_host_short(Node) ->
     Short.
 
 hosts_to_nodes(Hosts) ->
-    hosts_to_nodes(Hosts, [node()|nodes()], []).
+    hosts_to_nodes(Hosts, [node()|nodes()], [], []).
 
 node_for_host(H) -> 
     node_for_host(H, [node()|nodes()]).
@@ -258,13 +258,15 @@ node_for_host(H, Nodes) ->
         _ -> {error, too_many_nodes}
     end.
 
-hosts_to_nodes([], _, Res) ->
-    {ok, distinct(Res)};
+hosts_to_nodes([], _, Found, NotFound) ->
+    {distinct(Found), distinct(NotFound)};
 
-hosts_to_nodes([H|Rem], Nodes, Res) ->
+hosts_to_nodes([H|Rem], Nodes, Found, NotFound) ->
     case node_for_host(H, Nodes) of
-        {ok, Node} -> hosts_to_nodes(Rem, Nodes, [Node|Res]);
-        {error, not_found} -> {error, H}
+        {ok, Node} -> 
+            hosts_to_nodes(Rem, Nodes, [Node|Found], NotFound);
+        {error, not_found} -> 
+            hosts_to_nodes(Rem, Nodes, Found, [H|NotFound])
     end.
 
 closest_node(Nodes) -> 
@@ -301,6 +303,13 @@ to_list(L) when is_list(L) ->
 to_list(B) when is_binary(B) ->
     binary_to_list(B).
 
+localtime() ->
+    Now = os:timestamp(),
+    calendar:now_to_local_time(Now).
+
 fmt_date() ->
-    {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_datetime(erlang:now()),
+    {{Year, Month, Day}, {Hour, Minute, Second}} = localtime(), 
     lists:flatten(io_lib:format("~4..0w~2..0w~2..0w~2..0w~2..0w~2..0w",[Year,Month,Day,Hour,Minute,Second])).
+
+mkdirp(Dir) ->
+    filelib:ensure_dir(Dir ++ "/").

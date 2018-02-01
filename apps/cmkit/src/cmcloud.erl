@@ -19,7 +19,7 @@ current_nodes() ->
       ExpectedNodes = expected_nodes(),
       cmkit:intersection(ExpectedNodes, [node()|nodes()]).
 
-is_local(#{ replicas := Hosts}) ->
+is_local(Hosts) ->
     Localhost = cmkit:node_host_short(node()),
     lists:member(Localhost, Hosts).
 
