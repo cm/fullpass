@@ -24,17 +24,17 @@ init([]) ->
 ready(info, {nodedown, Node}, Data) ->
     State = cmcloud:state(),
     cmkit:log({cmdb, State, nodedown, Node}),
-    {next_state, State, Data};
+    {next_state, ready, Data};
 
 ready(info, {nodeup, Node}, Data) ->
     State = cmcloud:state(),
     cmkit:log({cmdb, State, nodeup, Node}),
-    {next_state, State, Data};
+    {next_state, ready, Data};
 
 ready(info, Msg, Data) ->
     State = cmcloud:state(),
     cmkit:log({cmdb, State, message, Msg}),
-    {next_state, State, Data}.
+    {next_state, ready, Data}.
 
 terminate(Reason, _, _) ->
     cmkit:log({cmdb, terminate, Reason}),
