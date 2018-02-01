@@ -1,11 +1,15 @@
 -module(cmdb).
 -export([
+         ping/1,
          write/2,
          write/3,
          read/2,
          backup/1,
          restore/2
         ]).
+
+ping(N) ->
+    gen_statem:call({cmdb_cloud, N}, ping).
 
 write(Db, Pairs) -> 
     in( node_for(Db), Db, {put, Pairs}).

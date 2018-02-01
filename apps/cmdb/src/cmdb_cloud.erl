@@ -36,6 +36,10 @@ ready(info, Msg, Data) ->
     cmkit:log({cmdb, State, message, Msg}),
     {next_state, ready, Data};
 
+ready({call, From}, ping, #data{index=I}=Data) ->
+    Res = {ok, I}, 
+    {keep_state, Data, {reply, From, Res}};
+
 ready({call, From}, {node, Name}, #data{index=I}=Data) ->
     Res = case I of 
               #{ Name := {_, none, _}} -> 
