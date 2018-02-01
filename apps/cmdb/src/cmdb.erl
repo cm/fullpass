@@ -3,7 +3,8 @@
          load_csv/2,
          write/2,
          write/3,
-         read/2
+         read/2,
+         backup/1
         ]).
 
 load_csv(Filename, Fun) -> 
@@ -22,3 +23,7 @@ write(Db, K, V) ->
 
 read(Db, K) ->
     gen_statem:call({Db, node()}, {get, K}).
+
+backup(Db) -> 
+    gen_statem:call({Db, node()}, backup).
+
