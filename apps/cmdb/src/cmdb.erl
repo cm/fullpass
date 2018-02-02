@@ -11,7 +11,9 @@
 ping(Host) ->
     case cmkit:node_for_host(Host) of 
         {ok, N} -> 
-            gen_statem:call({cmdb_cloud, N}, ping);
+            timer:tc(fun() -> 
+                gen_statem:call({cmdb_cloud, N}, ping)
+            end);
         Other  ->
             Other
     end.
