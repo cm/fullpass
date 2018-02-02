@@ -8,8 +8,14 @@
          restore/2
         ]).
 
-ping(N) ->
-    gen_statem:call({cmdb_cloud, N}, ping).
+ping(Host) ->
+    case cmkit:node_for_host(Host) of 
+        {ok, N} -> 
+            gen_statem:call({cmdb_cloud, N}, ping);
+        Other  ->
+            Other
+    end.
+
 
 write(Db, Pairs) -> 
     in( node_for(Db), Db, {put, Pairs}).
