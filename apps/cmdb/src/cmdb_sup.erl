@@ -24,6 +24,6 @@ db_spec(#{ name := Name}=Db) ->
     cmkit:child_spec(Name, Mod, [Db], worker).
 
 db_impl(#{ scheme := http}) -> cmdb_client;
-db_impl(#{ scheme := dets}) -> cmdb_dets;
-db_impl(#{ scheme := ets}) -> cmdb_ets.
+db_impl(#{ scheme := disc}) -> cmdb_dets;
+db_impl(#{ scheme := memory}) -> cmdb_ets.
 

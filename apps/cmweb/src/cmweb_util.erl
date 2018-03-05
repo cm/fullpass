@@ -17,6 +17,7 @@
          ws_invalid/2,
          ws_invalid/3,
          ws_not_found/2,
+         ws_not_implemented/2,
          ws_error/3,
          ws_error_with_reason/3,
          log/2]).
@@ -145,6 +146,9 @@ ws_invalid(Action, State) ->
 
 ws_not_found(Action, State) ->
     ws_reply(#{}, <<"not_found">>, Action, State).
+
+ws_not_implemented(Action, State) ->
+    ws_reply(#{}, <<"not_implemented">>, Action, State).
 
 ws_reply(Reply, State) ->
     log(ws_out, Reply),  

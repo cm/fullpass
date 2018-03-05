@@ -5,9 +5,7 @@
   {mod, { cmdb_app, []}},
   {applications,
    [kernel,
-    stdlib,
-    cowdb,
-    elmdb
+    stdlib
    ]},
   {env,[]},
   {modules, []},

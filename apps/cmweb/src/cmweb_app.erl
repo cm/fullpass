@@ -9,9 +9,8 @@
 start(_StartType, _StartArgs) ->
   case cmweb_sup:start_link() of 
     {ok, Pid } ->
-        Handlers = handlers(),
         Apps = cmkit:config(apps, cmweb), 
-        [ listen(App, Port, Acceptors, Handlers)
+        [ listen(App, Port, Acceptors)
           || {App, Port, Acceptors} <- Apps],
         {ok, Pid};      
     Other -> Other
@@ -20,14 +19,15 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
   ok.
 
-listen(App, Port, Acceptors, Handlers) ->
+listen(App, Port, Acceptors) ->
+    Handlers = handlers(App),
     Dispatch = cowboy_router:compile([{'_', routes(App, Handlers)}]),
     {ok, _} = cowboy:start_clear(App, 
                                  [{port, Port}, {num_acceptors, Acceptors}],
                                  #{env => #{dispatch => Dispatch},
                                   stream_handlers => [cowboy_compress_h,
                                                      cowboy_stream_h]}),
-    cmkit:log({cmweb, started, App, Port}).
+    cmkit:log({cmweb, started, App, Port, Handlers}).
 
 routes(App, Handlers) ->
   Debug = cmkit:config(debug, App, false),
@@ -40,11 +40,11 @@ routes(App, Handlers) ->
    {"/[...]", cowboy_static, {priv_dir, App, "."}}
   ].
 
-handlers() ->
+handlers(App) ->
     lists:foldl(fun(P, Handlers) ->
                         maps:put([erlang:atom_to_binary(P:key(), latin1)],
                                  P, Handlers)
-                end, #{}, cmweb:all()).
+                end, #{}, cmweb:all(App)).
 
 
 init(Req, State) ->
@@ -128,27 +128,28 @@ init_ws(Req, #state{handlers=_Handlers}=State) ->
   State2 = State#state{input=Input0, token=Token, data=#{}},
   {cowboy_websocket, Req, State2}.
 
-websocket_init(#state{app=_App, token=Token}=State) ->
+websocket_init(#state{app=App, token=Token}=State) ->
     SessionId = case Token of
                     undefined -> cmkit:uuid();
                     _ -> Token
                 end,
-    cmkit:log({ws_started, {SessionId, self()}}),
+    cmkit:log({ws_started, App, {SessionId, self()}}),
     cmweb_util:ws_ok(#{session=>SessionId}, connect, State).
 
 
-websocket_handle({text, Text}, #state{handlers=Handlers, input=Input0, token=_Token, data=Data}=State) ->
+websocket_handle({text, Text}, #state{app=App, handlers=Handlers, input=Input0, token=_Token, data=Data}=State) ->
     case cmkit:jsond(Text) of
         {error, _} ->
             {stop, State};
         #{<<"action">> := Action}=Body0 ->
-            cmweb_util:log(ws_in, Body0),
+            cmkit:log({ws_in, App, Body0}),
             Body = maps:merge(Body0, Input0),
             State2 = State#state{action=Action},
             case cmweb_util:module([Action], Handlers) of
                 undefined ->
-                    cmweb_util:ws_not_found(Action, State2);
+                    cmweb_util:ws_not_implemented(Action, State2);
                 Module ->
+                    cmkit:log({ws_in, Module}),
                     case Module:spec() of
                         {data, D} ->
                             cmweb_util:ws_ok(D, Action, State2);
@@ -161,33 +162,28 @@ websocket_handle({text, Text}, #state{handlers=Handlers, input=Input0, token=_To
                                     cmweb_util:ws_ok(Data, Action, State2)
                             end;
                         Spec ->
-                            case cmkit:parse([{text, <<"session">>}], Body) of
-                                {errors, Errors }->
+                            case cmkit:parse(Spec, Body) of
+                                {errors, Errors} ->
                                     cmweb_util:ws_invalid(Errors, Action, State2);
-                                {ok, #{<<"session">> := _SessionId}} ->
-                                    case cmkit:parse(Spec, Body) of
-                                        {errors, Errors} ->
-                                            cmweb_util:ws_invalid(Errors, Action, State2);
-                                        {ok,  Input} ->
-                                            case Module:do(Input, Data) of
-                                                {noreply, Data2} ->
-                                                    S3 = State2#state{data=Data2},
-                                                    {ok, S3};
-                                                {ok, Data2} ->
-                                                    S3 = State2#state{data=Data2},
-                                                    cmweb_util:ws_ok(#{}, Action, S3);
-                                                {ok, Action2, Data2} ->
-                                                    S3 = State2#state{data=Data2},
-                                                    cmweb_util:ws_ok(#{}, Action2, S3);
-                                                {ok, Action2, Reply, Data2} ->
-                                                    S3 = State2#state{data=Data2},
-                                                    cmweb_util:ws_ok(Reply, Action2, S3);
-                                                {error, Reason, Data2} ->
-                                                    S3 = State2#state{data=Data2},
-                                                    cmweb_util:ws_error_with_reason(Reason, Action, S3);
-                                                stop ->
-                                                    {stop, State2}
-                                            end
+                                {ok,  Input} ->
+                                    case Module:do(Input, Data) of
+                                        {noreply, Data2} ->
+                                            S3 = State2#state{data=Data2},
+                                            {ok, S3};
+                                        {ok, Data2} ->
+                                            S3 = State2#state{data=Data2},
+                                            cmweb_util:ws_ok(#{}, Action, S3);
+                                        {ok, Action2, Data2} ->
+                                            S3 = State2#state{data=Data2},
+                                            cmweb_util:ws_ok(#{}, Action2, S3);
+                                        {ok, Action2, Reply, Data2} ->
+                                            S3 = State2#state{data=Data2},
+                                            cmweb_util:ws_ok(Reply, Action2, S3);
+                                        {error, Reason, Data2} ->
+                                            S3 = State2#state{data=Data2},
+                                            cmweb_util:ws_error_with_reason(Reason, Action, S3);
+                                        stop ->
+                                            {stop, State2}
                                     end
                             end
 
