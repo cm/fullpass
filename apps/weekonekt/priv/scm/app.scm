@@ -60,7 +60,7 @@
         (list "div" '(("key" "search")
                       ("class" "column col-12 col-md-12 col-xs-12"))
             (list 
-            (list "h1" '() (list (list "text" "Search pictures"))) 
+            (list "h1" '() (list (list "text" "Search"))) 
                   (user-message (alist-get 'user-message model))
                   '("div" (("class" "form-group"))
                     ( ("label" (("class" "form-label")
@@ -75,11 +75,10 @@
                   '("div" (("class" "form-group")) 
                     ( ("button" (("class" "btn")
                                  ("onclick" search))
-                       (("text" "Search")) )))
+                       (("text" "Search pictures")) )))
                   
-                    
-                  (list "div" '(("class" "columns"))
-                        (map image-thumb (alist-get 'images model)))
+                  (images-panel model)  
+                  
                   )))
                   
        ))
@@ -95,6 +94,7 @@
                      (status "ok")
                      (data ((title text)
                             (url text)
+                            (id text)
                             (date ((year text)
                                    (month text)
                                    (day text)
@@ -154,7 +154,9 @@
           ('login 
             '(((state home))))
           ('search
-            '(((images ()))((ws search))))
+            '(((images ())(image undef))((ws search))))
+          ('select-image 
+            (list (list (list 'image (car data)))))
        ))))
   
   ;; subscriptions
@@ -170,12 +172,40 @@
     ('#f '("div" (("id" "user-message")) ()))
     ('#t (list "div" '(("id" "user-message")) (list (list "text" msg))))))
 
+(define (images-panel model)
+  (let ((img (alist-get 'image model)))
+    (case img
+        ('undef
+            (list "div" '(("class" "container"))
+                (list
+                  (list "div" '(("class" "columns"))
+                    (map image-thumb (alist-get 'images model))))))
+        (else 
+          (list "div" '(("class" "container"))
+                (list 
+                  (list "div" '(("class" "columns"))
+                        (list 
+                          (list "div" '(("class" "col-6")
+                                        ("key" "image-preview"))
+                                (list (image-preview img)))
+                          (list "div" '(("class" "col-6")
+                                        ("key" "image-actions"))
+                                (list (list)))))))))))
+
 (define (image-thumb img)
-  (list "div" (list (list "class" "col-3 col-xs-12 col-md-6")
+  (list "div" (list (list "class" "col-3 col-xs-12 col-md-6 c-hand")
+                    (list "onclick" 'select-image img)
                     (list "key" (alist-get "id" img)))
-    (list (list "figure" '(("class" "caption"))
         (list 
-            (list "img" (list (list "class" "img-responsive")
-                            (list "src" (alist-get 'url img))) '())
+          (image-preview img))))
+        
+(define (image-preview img)
+    (console-log "rendering img" img)
+    (list "div" '(("class" "caption"))
+        (list 
+            (list "img" (list 
+                          (list "class" "img-responsive")
+                          (list "src" (alist-get 'url img))) '())
             (list "figcaption" '(("class" "figure-caption text-center"))
-                  (list (list "text" (alist-get 'title img)))))))))
+                  (list (list "text" (alist-get 'title img)))))))
+

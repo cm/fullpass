@@ -46,7 +46,7 @@ handle({ok, {{_, 200, _}, Headers, Body}}) when is_list(Body) ->
         {"content-type", "application/json"} ->
             {ok, cmkit:jsond(Body)};
         {"content-type", CT} ->
-            {error, {invalid_content_type, CT, Body}};
+            {ok, CT, Body};
         false ->
             {error, {no_content_type, Body}}
     end;
